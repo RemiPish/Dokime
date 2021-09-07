@@ -1,19 +1,36 @@
 <template>
   <div id="app">
-    <Dashboard />
+    <nav class="navbar navbar-expand navbar-dark bg-black">
+      <router-link to="/" class="navbar-brand">Dokime</router-link>
+      <div class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <router-link to="/examens" class="nav-link">Examens</router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/creerExamen" class="nav-link">Créer</router-link>
+        </li>
+      </div>
+    </nav>
+
+    <div class="container mt-3">
+      <router-view />
+    </div>
   </div>
 </template>
 
 <script>
-import Dashboard from './DashBoard.vue'
 export default {
-  name: 'App',
-  components: {
-    Dashboard
-  }
-}
+  name: "app"
+};
 </script>
 
 <style>
-
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
 </style>

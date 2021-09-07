@@ -18,7 +18,10 @@
   },
   "homepage": "https://github.com/RemiPish/Dokime#readme",
   "dependencies": {
-    "mongodb": "^4.1.1"
+    "cors": "^2.8.5",
+    "mongo": "^0.1.0",
+    "mongoose": "^6.0.4",
+    "vuelidate": "^0.7.6"
   },
   "devDependencies": {
     "express": "^4.17.1",
