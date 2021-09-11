@@ -2,10 +2,11 @@
 const express = require('express');
 const cors = require("cors");
 global.Examen = require('./app/models/examenModel');
-const routes = require('./app/routesExamen')
+const routes = require('./app/routes')
 //const path = require('path')
 const mongoose = require('mongoose');
-const examenModel = require('./app/models/examenModel');
+
+//const examenModel = require('./app/models/examenModel');
 
 var corsOptions = {
     origin: "http://localhost:8080"

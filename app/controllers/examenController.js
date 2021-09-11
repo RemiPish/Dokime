@@ -1,8 +1,17 @@
 const mongoose = require('mongoose');
 const examenModel = mongoose.model('Examen');
 
+
+const getPagination = (page, size) => {
+  const limit = size ? +size : 10;
+  const offset = page ? page * limit : 1;
+
+  return { limit, offset };
+};
+
 // Cree un examen
 exports.create = (req, res) => {
+  console.log(req.body)
   //Valider requete 
   if (!req.body.titre) {
 
@@ -39,17 +48,26 @@ exports.create = (req, res) => {
 
 // Cherche tous les examens/un examen par titre
 exports.findAll = (req, res) => {
-  const titre = req.query.titre;
-  var condition = titre ? { title: { $regex: new RegExp(titre), $options: "i" } } : {};
+  const { page, size, titre } = req.query;
+  var condition = titre
+    ? { titre: { $regex: new RegExp(titre), $options: "i" } }
+    : {};
 
-  Examen.find(condition)
-    .then(data => {
-      res.send(data);
+  const { limit, offset } = getPagination(page, size);
+
+  Examen.paginate(condition, { offset, limit })
+    .then((data) => {
+      res.send({
+        totalItems: data.totalDocs,
+        examens: data.docs,
+        totalPages: data.totalPages,
+        currentPage: data.page - 1,
+      });
     })
-    .catch(err => {
+    .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Erreur pendant la recherche d'examen"
+          err.message || "Some error occurred while retrieving tutorials.",
       });
     });
 };
