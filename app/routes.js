@@ -8,6 +8,8 @@ module.exports = app => {
   router.post("/upload", upload.single('file'), examens.createWithCsv);
   router.delete("/",examens.deleteAll);
   router.get("/", examens.findAll);
+  router.get("/:id", examens.findOneID);
+  router.delete("/:id", examens.delete);
 
 app.use('/api/examens', router);
 };

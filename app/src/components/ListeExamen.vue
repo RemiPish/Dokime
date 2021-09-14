@@ -75,14 +75,15 @@
           <label><strong>Nombre de candidats:</strong></label>
           {{ examenSelectionne.listeEtudiants.length }}
         </div>
-        <button
-          class="m-3 btn btn-sm btn-success"
-          
+        <a
+          class="m-3 btn btn-sm btn-success"    
+          :href="'/examens/' + examenSelectionne._id"
         >
           Modifier
-        </button>
+        </a>
         <button
           class="m-3 btn btn-sm btn-danger"
+          @click="supprimeUnExamen"
         >
           Supprimer
         </button>
@@ -170,6 +171,19 @@ export default {
 
     supprimeTousExamens() {
       ExamenDataService.deleteAll()
+        .then((response) => {
+          console.log(response.data);
+          this.examenSelectionne = null;
+          this.refreshList();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
+
+    supprimeUnExamen() 
+    {
+         ExamenDataService.delete(this.examenSelectionne._id)
         .then((response) => {
           console.log(response.data);
           this.examenSelectionne = null;
