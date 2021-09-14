@@ -1,7 +1,8 @@
 import http from "../http-common";
+//const upload = require("./fileUpload.js");
 
 class ExamenDataService {
-  getAll(params){
+  getAll(params) {
     return http.get("/examens", { params });
   }
 
@@ -27,6 +28,13 @@ class ExamenDataService {
 
   findByTitle(titre) {
     return http.get(`/examens?titre=${titre}`);
+  }
+  createWithCsv(file) {
+    return http.post("/examens/upload/", file, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
   }
 }
 

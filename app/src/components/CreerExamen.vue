@@ -2,7 +2,7 @@
   <div class="submit-form">
     <div class="header">
       <h1>Créer un examen</h1>
-      </div>
+    </div>
     <div v-if="!submitted">
       <div class="form-group">
         <label for="titre">Titre</label>
@@ -56,16 +56,33 @@
           name="heure"
         />
       </div>
-
-      <button @click="creerExamen" class="btn btn-success">Créer l'examen</button>
+      <div class="form-group">
+        <label for="fichierCSV"
+          >Fichier .csv contenant la liste de candidats:</label
+        >
+        <input
+          class="form-control"
+          id="file"
+          type="file"
+          ref="file"
+          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+          @change="onChangeFileUpload"
+        />
+      </div>
+      <br /><br />
+      <button @click="creerExamen" class="btn btn-success">
+        Créer l'examen
+      </button>
       <div v-if="erreur">
         <label>{{ erreurMessage }}</label>
-        </div>
+      </div>
     </div>
 
     <div v-else>
       <h3>Examen créé!</h3>
-      <button class="btn btn-success" @click="nouveauExamen">Créer un nouveau examen</button>
+      <button class="btn btn-success" @click="nouveauExamen">
+        Créer un nouveau examen
+      </button>
     </div>
   </div>
 </template>
@@ -85,33 +102,54 @@ export default {
         dateDebut: "",
         heure: "",
       },
-      erreurMessage : "",
+      file: undefined,
+      erreurMessage: "",
       submitted: false,
-      erreur: false
+      erreur: false,
     };
   },
   methods: {
     creerExamen() {
-      var data = {
-        titre: this.examen.titre,
-        universite: this.examen.universite,
-        matiere: this.examen.matiere,
-        dateDebut: this.examen.dateDebut,
-        heure: this.examen.heure,
-      };
-
-      ExamenDataService.create(data)
-        .then((response) => {
-          this.examen.id = response.data.id;
-          console.log(response.data);
+      if (!this.file) {
+        var data = {
+          titre: this.examen.titre,
+          universite: this.examen.universite,
+          matiere: this.examen.matiere,
+          dateDebut: this.examen.dateDebut,
+          heure: this.examen.heure,
+        };
+        ExamenDataService.create(data)
+          .then((response) => {
+            console.log(response.data);
             this.submitted = true;
             this.erreur = false;
-        })
-        .catch((e) => {
-          this.erreurMessage = e.response.data.message;
-          this.erreur = true;
-         
-        });
+          })
+          .catch((e) => {
+            this.erreurMessage = e.response.data.message;
+            this.erreur = true;
+          });
+      } else {
+        let formData = new FormData();
+        formData.append("titre", this.examen.titre);
+        formData.append("universite", this.examen.universite);
+        formData.append("matiere", this.examen.matiere);
+        formData.append("dateDebut", this.examen.dateDebut);
+        formData.append("heure", this.examen.heure);
+        formData.append("file", this.file);
+        ExamenDataService.createWithCsv(formData)
+        .then((response) => {
+            console.log(response.data);
+            this.submitted = true;
+            this.erreur = false;
+          })
+          .catch((e) => {
+            this.erreurMessage = e.response.data.message;
+            this.erreur = true;
+          });
+      }
+    },
+    onChangeFileUpload() {
+      this.file = this.$refs.file.files[0];
     },
 
     nouveauExamen() {

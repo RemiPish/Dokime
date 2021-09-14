@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const examenModel = mongoose.model('Examen');
+const fs = require("fs");
+const fastcsv = require("fast-csv");
+
 
 
 const getPagination = (page, size) => {
@@ -11,7 +14,7 @@ const getPagination = (page, size) => {
 
 // Cree un examen
 exports.create = (req, res) => {
-  console.log(req.body)
+  console.log(req.body);
   //Valider requete 
   if (!req.body.titre) {
 
@@ -30,7 +33,8 @@ exports.create = (req, res) => {
     universite: req.body.universite,
     matiere: req.body.matiere,
     dateDebut: req.body.dateDebut,
-    etat: "En cours"
+    etat: "En cours",
+    listeEtudiants: []
   });
 
   // Sauvegarde examen dans la base de donnee
@@ -43,7 +47,6 @@ exports.create = (req, res) => {
     }
     res.json(examenModel);
   });
-
 };
 
 // Cherche tous les examens/un examen par titre
@@ -90,65 +93,86 @@ exports.findOneID = (req, res) => {
 };
 
 // Mettre a jour l'examen
-exports.update = (req, res) => {
-  if (!req.body) {
-    return res.status(400).send({
-      message: "La mise a jour ne peut pas etre vide"
-    });
-  }
+exports.createWithCsv = (req, res) => {
+  const examen = new examenModel({
+    titre: req.body.titre,
+    universite: req.body.universite,
+    matiere: req.body.matiere,
+    dateDebut: req.body.dateDebut,
+    etat: "En cours",
+    listeEtudiants: []
+  });
+  fs.createReadStream(req.file.path)
+    .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
+    .on("error", (error) => console.error(error))
+    .on("data", function (data) {
 
-  const id = req.params.id;
-
-  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
-    .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: "Examen non trouve avec l'id" + id
-        });
-      } else res.send({ message: "L'examen a ete mis a jour!" });
+      examen.listeEtudiants.push({
+        nom: data[0],
+        prenom: data[1],
+        numero: data[2]
+      })
     })
-    .catch(err => {
-      res.status(500).send({
-        message: "Erreur pendant la mise a jour avec l'id=" + id
-      });
-    });
-};
-
-// Supprime un examen avec l'id
-exports.delete = (req, res) => {
-  const id = req.params.id;
-
-  Examen.findByIdAndRemove(id)
-    .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: "Examen non trouve avec l'id" + id
-        });
-      } else {
-        res.send({
-          message: "L'examen a ete supprime!"
+    .on("end", (rowCount) => {
+      examen.listeEtudiants.shift();
+      console.log(rowCount);
+      examen.save((err, examenModel) => {
+        if (err) {
+          res.status(500).send({
+            message:
+              err.message || "Erreur pendant la création de l'examen"
+          });
+        }
+        res.json(examenModel);
+        fs.unlink(req.file.path, (err) => {
+          if (err) {
+            console.error(err)
+            return
+          }
         });
       }
-    })
-    .catch(err => {
-      res.status(500).send({
-        message: "Erreur pendant la suppression avec l'id=" + id
-      });
-    });
-};
+      )}
+    )
+  };
 
-// supprimer tous les examens
-exports.deleteAll = (req, res) => {
-  Examen.deleteMany({})
-    .then(data => {
-      res.send({
-        message: `${data.deletedCount} examens ont ete supprimes`
+  // Supprime un examen avec l'id
+  exports.delete = (req, res) => {
+    const id = req.params.id;
+
+    Examen.findByIdAndRemove(id)
+      .then(data => {
+        if (!data) {
+          res.status(404).send({
+            message: "Examen non trouve avec l'id" + id
+          });
+        } else {
+          res.send({
+            message: "L'examen a ete supprime!"
+          });
+        }
+      })
+      .catch(err => {
+        res.status(500).send({
+          message: "Erreur pendant la suppression avec l'id=" + id
+        });
       });
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Erreur pendant la suppression de tous les examens"
+  };
+
+  // supprimer tous les examens
+  exports.deleteAll = (req, res) => {
+    this.$confirm("Voulez vous supprimer tous les examens").then(() => {
+      Examen.deleteMany({})
+      .then(data => {
+        res.send({
+          message: `${data.deletedCount} examens ont ete supprimes`
+        });
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || "Erreur pendant la suppression de tous les examens"
+        });
       });
     });
-};
+    
+  };

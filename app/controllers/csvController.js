@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const etudiantModel = mongoose.model('Etudiant');
+const etudiantModel = mongoose.model('Examen');
 
 const fs = require("fs");
 const csv = require("fast-csv");

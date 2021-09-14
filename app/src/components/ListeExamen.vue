@@ -71,13 +71,22 @@
           <label><strong>Etat:</strong></label>
           {{ examenSelectionne.etat }}
         </div>
-
-        <a
-          class="badge badge-warning"
-          :href="'/examens/' + examenSelectionne.id"
+        <div>
+          <label><strong>Nombre de candidats:</strong></label>
+          {{ examenSelectionne.listeEtudiants.length }}
+        </div>
+        <button
+          class="m-3 btn btn-sm btn-success"
+          
         >
           Modifier
-        </a>
+        </button>
+        <button
+          class="m-3 btn btn-sm btn-danger"
+        >
+          Supprimer
+        </button>
+        
       </div>
     </div>
   </div>
@@ -87,6 +96,7 @@
 import ExamenDataService from "../services/examenDataService.js";
 import VPagination from "@hennge/vue3-pagination";
 import "@hennge/vue3-pagination/dist/vue3-pagination.css";
+
 export default {
   name: "liste-examens",
   components: {
