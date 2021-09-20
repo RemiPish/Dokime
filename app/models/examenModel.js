@@ -15,7 +15,7 @@ const examenSchema = new Schema({
     matiere: String,
     heure: String,
     dateDebut: {
-        type: Date,
+        type: String
     },
     dateCloture: {
         type: Date,

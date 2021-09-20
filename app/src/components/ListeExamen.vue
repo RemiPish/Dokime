@@ -41,7 +41,7 @@
           @update:modelValue="onChangePage"
         />
       </div>
-      <button class="m-3 btn btn-sm btn-danger" @click="supprimeTousExamens">
+      <button class="m-3 btn btn-sm btn-danger" @click="deleteAllExams">
         Supprimer tous les examens
       </button>
     </div>
@@ -83,7 +83,7 @@
         </a>
         <button
           class="m-3 btn btn-sm btn-danger"
-          @click="supprimeUnExamen"
+          @click="deleteAnExam"
         >
           Supprimer
         </button>
@@ -134,7 +134,7 @@ export default {
       return params;
     },
 
-    recupereTousExamens() {
+    getAllExams() {
       const params = this.getRequestParams(
         this.chercheTitre,
         this.page,
@@ -155,11 +155,11 @@ export default {
 
     onChangePage(value) {
       this.page = value;
-      this.recupereTousExamens();
+      this.getAllExams();
     },
 
     refreshList() {
-      this.recupereTousExamens();
+      this.getAllExams();
       this.currentTutorial = null;
       this.currentIndex = -1;
     },
@@ -169,7 +169,7 @@ export default {
       this.currentIndex = index;
     },
 
-    supprimeTousExamens() {
+    deleteAllExams() {
       ExamenDataService.deleteAll()
         .then((response) => {
           console.log(response.data);
@@ -181,7 +181,7 @@ export default {
         });
     },
 
-    supprimeUnExamen() 
+    deleteAnExam() 
     {
          ExamenDataService.delete(this.examenSelectionne._id)
         .then((response) => {
@@ -206,7 +206,7 @@ export default {
     },*/
   },
   mounted() {
-    this.recupereTousExamens();
+    this.getAllExams();
   },
 };
 </script>

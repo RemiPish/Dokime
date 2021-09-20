@@ -70,11 +70,62 @@ exports.findAll = (req, res) => {
     .catch((err) => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving tutorials.",
+          err.message || "Erreur pendant la récuperation de l'examen",
       });
     });
 };
 
+exports.updateExam = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+
+  const id = req.params.id;
+
+  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'examen ayant l'id=${id} n'a pas été trouvé!`
+        });
+      } else res.send({ message: "L'examen a été modifié" });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Erreur durant la modification de l'examen ayany l'id=" + id
+      });
+    });
+};
+
+exports.deleteAStudent = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+  const id = req.params.id;
+
+  Examen.update(
+    { "_id": id },
+    { "$pull": { "listeEtudiants": { "numero": req.body.numero } } }
+  )
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'Etudiant ayant numero ${req.body.numero} n'est pas trouvé! `
+        });
+      } else res.send({ message: req.body.numero });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || `Erreur durant la suppression d'un etudiant numero ${req.body.numero} pour l'examen ${id}`
+      });
+    });
+};
 // Cherche un examen par ID
 exports.findOneID = (req, res) => {
   const id = req.params.id;
@@ -131,48 +182,47 @@ exports.createWithCsv = (req, res) => {
           }
         });
       }
-      )}
+      )
+    }
     )
-  };
+};
 
-  // Supprime un examen avec l'id
-  exports.delete = (req, res) => {
-    const id = req.params.id;
+// Supprime un examen avec l'id
+exports.delete = (req, res) => {
+  const id = req.params.id;
 
-    Examen.findByIdAndRemove(id)
-      .then(data => {
-        if (!data) {
-          res.status(404).send({
-            message: "Examen non trouve avec l'id" + id
-          });
-        } else {
-          res.send({
-            message: "L'examen a ete supprime!"
-          });
-        }
-      })
-      .catch(err => {
-        res.status(500).send({
-          message: "Erreur pendant la suppression avec l'id=" + id
+  Examen.findByIdAndRemove(id)
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: "Examen non trouve avec l'id" + id
         });
-      });
-  };
-
-  // supprimer tous les examens
-  exports.deleteAll = (req, res) => {
-    this.$confirm("Voulez vous supprimer tous les examens").then(() => {
-      Examen.deleteMany({})
-      .then(data => {
+      } else {
         res.send({
-          message: `${data.deletedCount} examens ont ete supprimes`
+          message: "L'examen a ete supprime!"
         });
-      })
-      .catch(err => {
-        res.status(500).send({
-          message:
-            err.message || "Erreur pendant la suppression de tous les examens"
-        });
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: "Erreur pendant la suppression avec l'id=" + id
       });
     });
-    
-  };
+};
+
+// supprimer tous les examens
+exports.deleteAll = (req, res) => {
+  Examen.deleteMany({})
+    .then(data => {
+      res.send({
+        message: `${data.deletedCount} examens ont ete supprimes`
+      });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Erreur pendant la suppression de tous les examens"
+      });
+    });
+
+};

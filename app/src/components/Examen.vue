@@ -1,5 +1,7 @@
 <template>
   <div v-if="examenSelectionne">
+    <div class="row">
+      <div class="col p-2">
         <h4>Examen</h4>
         <div>
           <label><strong>Titre:</strong></label> {{ examenSelectionne.titre }}
@@ -24,19 +26,146 @@
           <label><strong>Etat:</strong></label>
           {{ examenSelectionne.etat }}
         </div>
+        <div class="p-1">
+          <button @click="modifierExamen" class="btn btn-success">Modifier l'examen</button>
+        </div>
+        <div class="p-1">
+          <button @click="updateExam" class="btn btn-success">Ajouter un étudiant</button>
+        </div>
+         <div class="p-1">
+          <button @click="updateExam" class="btn btn-primary">Afficher la feuille d'émargement</button>
+        </div>
+        <div class="p-1">
+          <button @click="updateExam" class="btn btn-danger">Supprimer l'examen</button>
+        </div>
+      </div>
+      <div class="col submit-form p-2" v-if="modifExam">
+        <h2>Modifier l'examen</h2>
+        <div class="p-1 form-group">
+          <label for="titre"><strong>Titre:</strong></label>
+          <input
+            type="text"
+            class="form-control"
+            id="titre"
+            required
+            v-model="examenSelectionne.titre"
+            name="titre"
+          />
+        </div>
+        <div class="p-1 form-group">
+          <label for="universite"><strong>Université:</strong></label>
+          <input
+            type="text"
+            class="form-control"
+            id="universite"
+            required
+            v-model="examenSelectionne.universite"
+            name="universite"
+          />
+        </div>
+        <div class="p-1 form-group">
+          <label for="matiere"><strong>Matière:</strong></label>
+          <input
+            type="text"
+            class="form-control"
+            id="matiere"
+            required
+            v-model="examenSelectionne.matiere"
+            name="matiere"
+          />
+        </div>
+        <div class="p-1 form-group">
+          <label for="dateDebut">Date du debut de l'epreuve:</label>
+          <input
+            type="date"
+            class="form-control"
+            id="dateDebut"
+            v-model="examenSelectionne.dateDebut"
+            name="dateDebut"
+          />
+        </div>
+
+        <div class="p-1 form-group">
+          <label><strong>Heure de l'epreuve:</strong></label>
+          <input
+            class="form-control"
+            id="heure"
+            v-model="examenSelectionne.heure"
+            name="heure"
+          />
+        </div>
+        <div class="p-1 form-group">
+          <label><strong>Etat:</strong></label>
+          <select
+            class="form-control"
+            id="etat"
+            v-model="examenSelectionne.etat"
+            name="etat"
+          >
+            <option value="En cours">En cours</option>
+            <option value="Clos">Clos</option>
+          </select>
+        </div>
+        <div class="p-3">
+          <button @click="updateExam" class="btn btn-success">Modifier</button>
+        </div>
+        <div class="p-2">
+          <label>{{ message }}</label>
+        </div>
+      </div>
+      <div>
+        <h3 class="p-2 text-center">Liste de candidats</h3>
         <div>
-          <label><strong>Nombre de candidats:</strong></label>
+          <label class="p-1 text-center"
+            ><strong>Nombre de candidats:</strong></label
+          >
           {{ examenSelectionne.listeEtudiants.length }}
         </div>
-     </div>
-    <div v-else>
-        <br />
-        <p>Examen Inconnu</p>
-        <p>{{ message }}</p>
+      </div>
     </div>
-    
+    <div>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Numéro d'étudiants</th>
+            <th>Présence</th>
+            <th>Remise de copie</th>
+            <th>Note</th>
+            <th>Gestion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="etudiant in examenSelectionne.listeEtudiants"
+            :key="etudiant._id"
+          >
+            <td>{{ etudiant.nom }}</td>
+            <td>{{ etudiant.prenom }}</td>
+            <td>{{ etudiant.numero }}</td>
+            <td>{{ etudiant.presence }}</td>
+            <td>{{ etudiant.remis }}</td>
+            <td>{{ etudiant.note }}</td>
+            <td>
+              <button @click="updateExam" class="btn btn-success">
+                Modifier
+              </button>
+              &nbsp;&nbsp;
+              <button
+                @click="deleteAStudent(etudiant.numero)"
+                class="btn btn-danger"
+              >
+                Supprimer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    <!--button class="badge badge-primary mr-2"
+  <!--button class="badge badge-primary mr-2"
       v-if="examenSelectionne.published"
       @click="updatePublished(false)"
     >
@@ -55,14 +184,11 @@
     </button>
 
     <button type="submit" class="badge badge-success"
-      @click="updateExamen"
+      @click="updateExam"
     >
       Update
         
     </button-->
-  
-
-  
 </template>
 
 <script>
@@ -73,48 +199,58 @@ export default {
   data() {
     return {
       examenSelectionne: null,
-      message: ''
+      message: "",
+      modifExam: false,
     };
   },
   methods: {
     getExamen(id) {
-        console.log(id);
       ExamenDataService.get(id)
-        .then(response => {
+        .then((response) => {
           this.examenSelectionne = response.data;
-          console.log(response.data);
         })
-        .catch(e => {
+        .catch((e) => {
           console.log(e);
         });
     },
 
-    updateExamen() {
-      ExamenDataService.update(this.examenSelectionne.id, this.examenSelectionne)
-        .then(response => {
+    updateExam() {
+      ExamenDataService.updateExam(
+        this.examenSelectionne._id,
+        this.examenSelectionne
+      )
+        .then((response) => {
           console.log(response.data);
-          this.message = 'The Examen was updated successfully!';
+          this.message = "L'examen a été modifié";
         })
-        .catch(e => {
+        .catch((e) => {
           console.log(e);
         });
     },
 
-    deleteExamen() {
-      ExamenDataService.delete(this.examenSelectionne.id)
-        .then(response => {
+    deleteAStudent(numero) {
+      var data = {
+        numero: numero,
+      };
+      ExamenDataService.deleteAStudent(this.examenSelectionne._id, data)
+        .then((response) => {
           console.log(response.data);
-          this.$router.push({ name: "Examens" });
+          this.message = "L'étudiant a été supprimé de la liste de candidats!";
+          this.getExamen(this.$route.params.id);
         })
-        .catch(e => {
+        .catch((e) => {
           console.log(e);
         });
-    }
+    },
+    modifierExamen() {
+      this.modifExam= true;
+    },
   },
+
   mounted() {
-    this.message = '';
+    this.message = "";
     this.getExamen(this.$route.params.id);
-  }
+  },
 };
 </script>
 

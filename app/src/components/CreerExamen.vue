@@ -4,7 +4,7 @@
       <h1>Créer un examen</h1>
     </div>
     <div v-if="!submitted">
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="titre">Titre</label>
         <input
           type="text"
@@ -16,7 +16,7 @@
         />
       </div>
 
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="universite">Université</label>
         <input
           class="form-control"
@@ -27,7 +27,7 @@
         />
       </div>
 
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="matiere">Matière</label>
         <input
           class="form-control"
@@ -37,17 +37,17 @@
         />
       </div>
 
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="dateDebut">Date de l'épreuve</label>
         <input
           type="date"
           class="form-control"
-          id="matiere"
+          id="dateDebut"
           v-model="examen.dateDebut"
-          name="matiere"
+          name="dateDebut"
         />
       </div>
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="heure">Heure de l'épreuve</label>
         <input
           class="form-control"
@@ -56,7 +56,7 @@
           name="heure"
         />
       </div>
-      <div class="form-group">
+      <div class="p-3 form-group">
         <label for="fichierCSV"
           >Fichier .csv contenant la liste de candidats:</label
         >
@@ -69,8 +69,7 @@
           @change="onChangeFileUpload"
         />
       </div>
-      <br /><br />
-      <button @click="creerExamen" class="btn btn-success">
+      <button @click="createExam" class="p-3 btn btn-success">
         Créer l'examen
       </button>
       <div v-if="erreur">
@@ -80,7 +79,7 @@
 
     <div v-else>
       <h3>Examen créé!</h3>
-      <button class="btn btn-success" @click="nouveauExamen">
+      <button class="btn btn-success" @click="newExam">
         Créer un nouveau examen
       </button>
     </div>
@@ -109,7 +108,7 @@ export default {
     };
   },
   methods: {
-    creerExamen() {
+    createExam() {
       if (!this.file) {
         var data = {
           titre: this.examen.titre,
@@ -152,7 +151,7 @@ export default {
       this.file = this.$refs.file.files[0];
     },
 
-    nouveauExamen() {
+    newExam() {
       this.submitted = false;
       this.examen = {};
     },

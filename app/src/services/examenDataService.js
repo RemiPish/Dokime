@@ -1,5 +1,4 @@
 import http from "../http-common";
-//const upload = require("./fileUpload.js");
 
 class ExamenDataService {
   getAll(params) {
@@ -14,8 +13,12 @@ class ExamenDataService {
     return http.post("/examens", data);
   }
 
-  update(id, data) {
+  updateExam(id, data) {
     return http.put(`/examens/${id}`, data);
+  }
+
+  deleteAStudent(id, data) {
+    return http.put(`/examens/supprimerEtudiant/${id}`, data);
   }
 
   delete(id) {

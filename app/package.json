@@ -10,7 +10,6 @@
   "dependencies": {
     "@hennge/vue3-pagination": "^1.0.17",
     "@mdi/font": "5.9.55",
-    "@ocrv/vue-tailwind-pagination": "0.0.4",
     "axios": "^0.21.3",
     "core-js": "^3.6.5",
     "glob-parent": "^6.0.1",

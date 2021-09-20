@@ -5,6 +5,8 @@ module.exports = app => {
   const router = require("express").Router();
 
   router.post("/", examens.create);
+  router.put("/:id", examens.updateExam);
+  router.put("/supprimerEtudiant/:id", examens.deleteAStudent);
   router.post("/upload", upload.single('file'), examens.createWithCsv);
   router.delete("/",examens.deleteAll);
   router.get("/", examens.findAll);
