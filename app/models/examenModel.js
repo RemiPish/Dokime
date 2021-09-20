@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const mongoosePaginate = require("mongoose-paginate-v2");   
+const mongoosePaginate = require("mongoose-paginate-v2"); 
+const uniqueValidator = require('mongoose-unique-validator');
 
 
 const examenSchema = new Schema({
@@ -37,7 +38,8 @@ const examenSchema = new Schema({
             },
             numero: {
                 type: String,
-                required: true
+                required: true,
+                unique: true
             },
             code: {
                 type: String
@@ -59,6 +61,7 @@ const examenSchema = new Schema({
     ]
 });
 
+examenSchema.plugin(uniqueValidator);
 examenSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Examen', examenSchema);
 
