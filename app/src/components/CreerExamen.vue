@@ -94,7 +94,6 @@ export default {
   data() {
     return {
       examen: {
-        id: null,
         titre: "",
         universite: "",
         matiere: "",

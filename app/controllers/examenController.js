@@ -108,7 +108,7 @@ exports.deleteAStudent = (req, res) => {
   }
   const id = req.params.id;
 
-  Examen.update(
+  Examen.updateOne(
     { "_id": id },
     { "$pull": { "listeEtudiants": { "numero": req.body.numero } } }
   )
@@ -126,6 +126,34 @@ exports.deleteAStudent = (req, res) => {
       });
     });
 };
+
+exports.addAStudent = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+  const id = req.params.id;
+
+  Examen.updateOne(
+    { "_id": id },
+    { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero } } }
+  )
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'Etudiant n'a pas pu etre ajouté! `
+        });
+      } else res.send({ message: req.body.numero });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || `Erreur durant l'ajout d'un etudiant pour l'examen ${id}`
+      });
+    });
+};
+
 // Cherche un examen par ID
 exports.findOneID = (req, res) => {
   const id = req.params.id;

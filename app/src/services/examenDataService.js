@@ -17,6 +17,10 @@ class ExamenDataService {
     return http.put(`/examens/${id}`, data);
   }
 
+  addAStudent(id, data) {
+    return http.put(`/examens/ajouterEtudiant/${id}`, data);
+  }
+
   deleteAStudent(id, data) {
     return http.put(`/examens/supprimerEtudiant/${id}`, data);
   }
