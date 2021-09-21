@@ -8,6 +8,7 @@ module.exports = app => {
   router.put("/:id", examens.updateExam);
   router.put("/supprimerEtudiant/:id", examens.deleteAStudent);
   router.put("/ajouterEtudiant/:id", examens.addAStudent);
+  router.put("/cloturerExamen/:id", examens.closeExam);
   router.post("/upload", upload.single('file'), examens.createWithCsv);
   router.delete("/",examens.deleteAll);
   router.get("/", examens.findAll);

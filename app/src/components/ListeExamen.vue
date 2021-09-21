@@ -79,7 +79,7 @@
           class="m-3 btn btn-sm btn-success"    
           :href="'/examens/' + examenSelectionne._id"
         >
-          Modifier
+          Gérer
         </a>
         <button
           class="m-3 btn btn-sm btn-danger"

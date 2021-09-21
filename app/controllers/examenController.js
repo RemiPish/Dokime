@@ -154,6 +154,27 @@ exports.addAStudent = (req, res) => {
     });
 };
 
+exports.closeExam = (req, res) => {
+  const id = req.params.id;
+  Examen.updateOne(
+    { "_id": id },
+    { "$set": { "etat": "Clos" } }
+  )
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'examen n'a pas pu etre clos `
+        });
+      } else res.send({ message: req.body.numero });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || `Erreur durant la cloture de l'examen ${id}`
+      });
+    });
+};
+
 // Cherche un examen par ID
 exports.findOneID = (req, res) => {
   const id = req.params.id;

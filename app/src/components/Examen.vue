@@ -27,18 +27,35 @@
           {{ examenSelectionne.etat }}
         </div>
         <div class="p-1">
-          <button @click="changeBoolean('examen')" class="btn btn-success">
+          <button
+            :disabled="this.examenSelectionne.etat == 'Clos'"
+            @click="changeBoolean('examen')"
+            class="btn btn-success"
+          >
             Modifier l'examen
           </button>
         </div>
         <div class="p-1">
-          <button @click="changeBoolean('etudiant')" class="btn btn-success">
+          <button
+            :disabled="this.examenSelectionne.etat == 'Clos'"
+            @click="changeBoolean('etudiant')"
+            class="btn btn-success"
+          >
             Ajouter un étudiant
           </button>
         </div>
         <div class="p-1">
           <button @click="updateExam" class="btn btn-primary">
-            Afficher la feuille d'émargement
+            Voir la feuille d'émargement
+          </button>
+        </div>
+        <div class="p-1">
+          <button
+            :disabled="this.examenSelectionne.etat == 'Clos'"
+            @click="closeExam"
+            class="btn btn-warning"
+          >
+            Clôturer l'examen
           </button>
         </div>
         <div class="p-1">
@@ -101,18 +118,6 @@
             v-model="examenSelectionne.heure"
             name="heure"
           />
-        </div>
-        <div class="p-1 form-group">
-          <label><strong>Etat:</strong></label>
-          <select
-            class="form-control"
-            id="etat"
-            v-model="examenSelectionne.etat"
-            name="etat"
-          >
-            <option value="En cours">En cours</option>
-            <option value="Clos">Clos</option>
-          </select>
         </div>
         <div class="p-3">
           <button @click="updateExam" class="btn btn-success">Modifier</button>
@@ -197,11 +202,16 @@
             <td>{{ etudiant.remis }}</td>
             <td>{{ etudiant.note }}</td>
             <td>
-              <button @click="updateExam" class="btn btn-success">
+              <button
+                :disabled="this.examenSelectionne.etat == 'Clos'"
+                @click="updateExam"
+                class="btn btn-success"
+              >
                 Modifier
               </button>
               &nbsp;&nbsp;
               <button
+                :disabled="this.examenSelectionne.etat == 'Clos'"
                 @click="deleteAStudent(etudiant.numero)"
                 class="btn btn-danger"
               >
@@ -270,6 +280,18 @@ export default {
         });
     },
 
+    closeExam() {
+      ExamenDataService.closeExam(this.examenSelectionne._id)
+        .then((response) => {
+          console.log(response.data);
+          this.message = "L'examen est clos";
+          this.refreshPage();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
+
     updateExam() {
       ExamenDataService.updateExam(
         this.examenSelectionne._id,
@@ -332,7 +354,7 @@ export default {
     },
     refreshPage() {
       this.etudiant = {};
-      
+
       this.getExamen(this.$route.params.id);
     },
   },

@@ -16,6 +16,10 @@ class ExamenDataService {
   updateExam(id, data) {
     return http.put(`/examens/${id}`, data);
   }
+  closeExam(id)
+  {
+    return http.put(`/examens/cloturerExamen/${id}`);
+  }
 
   addAStudent(id, data) {
     return http.put(`/examens/ajouterEtudiant/${id}`, data);
