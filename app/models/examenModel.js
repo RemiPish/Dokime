@@ -39,7 +39,6 @@ const examenSchema = new Schema({
             numero: {
                 type: String,
                 required: true,
-                unique: true
             },
             code: {
                 type: String

@@ -75,6 +75,33 @@ exports.findAll = (req, res) => {
     });
 };
 
+exports.updateStudent = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+  const id = req.params.id;
+  Examen.updateOne(
+    { "_id": id, "listeEtudiants.numero" : req.body.numero },
+    { "$set": { "listeEtudiants.$.presence": req.body.presence, "listeEtudiants.$.remis": req.body.remis, "listeEtudiants.$.note": req.body.note} } ,
+    { runValidators: true, context: 'query' },
+  )
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'examen ayant l'id=${id} n'a pas été trouvé!`
+        });
+      } else res.send(data);
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Erreur durant la modification de l'examen ayany l'id=" + id
+      });
+    });
+};
+
 exports.updateExam = (req, res) => {
   if (!req.body) {
     return res.status(400).send({
@@ -84,7 +111,7 @@ exports.updateExam = (req, res) => {
 
   const id = req.params.id;
 
-  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false },  { runValidators: true, context: 'query' })
     .then(data => {
       if (!data) {
         res.status(404).send({
@@ -110,7 +137,8 @@ exports.deleteAStudent = (req, res) => {
 
   Examen.updateOne(
     { "_id": id },
-    { "$pull": { "listeEtudiants": { "numero": req.body.numero } } }
+    { "$pull": { "listeEtudiants": { "numero": req.body.numero } } },
+    { runValidators: true, context: 'query' },
   )
     .then(data => {
       if (!data) {
@@ -137,7 +165,8 @@ exports.addAStudent = (req, res) => {
 
   Examen.updateOne(
     { "_id": id },
-    { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero } } }
+    { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero } } },
+    { runValidators: true, context: 'query' },
   )
     .then(data => {
       if (!data) {
@@ -172,6 +201,21 @@ exports.closeExam = (req, res) => {
         message:
           err.message || `Erreur durant la cloture de l'examen ${id}`
       });
+    });
+};
+
+exports.findAStudent = (req, res) => {
+  const id = req.params.id;
+  Examen.findById(id).select({"listeEtudiants": {$elemMatch:{"numero" : req.params.numero}}})
+    .then(data => {
+      if (!data)
+        res.status(404).send({ message: "Etudiant non trouve avec l'id  " + req.params.numero});
+      else res.send(data.listeEtudiants[0]);
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .send({ message: "Erreur pendant la recherche d'etudiant avec l'id " + req.params.numero });
     });
 };
 

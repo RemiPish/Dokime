@@ -16,6 +16,11 @@ class ExamenDataService {
   updateExam(id, data) {
     return http.put(`/examens/${id}`, data);
   }
+
+  updateStudent(id, data) {
+    return http.put(`/examens/etudiant/${id}`, data);
+  }
+
   closeExam(id)
   {
     return http.put(`/examens/cloturerExamen/${id}`);
@@ -35,6 +40,11 @@ class ExamenDataService {
 
   deleteAll() {
     return http.delete(`/examens`);
+  }
+
+  findAStudent(id, numero)
+  {
+    return http.get(`/examens/etudiant/${id}/${numero}`);
   }
 
   findByTitle(titre) {

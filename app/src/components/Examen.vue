@@ -38,7 +38,7 @@
         <div class="p-1">
           <button
             :disabled="this.examenSelectionne.etat == 'Clos'"
-            @click="changeBoolean('etudiant')"
+            @click="changeBoolean('ajoutEtudiant')"
             class="btn btn-success"
           >
             Ajouter un étudiant
@@ -164,6 +164,52 @@
         </div>
       </div>
 
+      <div class="col submit-form p-2" v-if="modifEtudiant">
+        <h2>Etudiant numéro {{this.etudiantSelectionne.numero}}</h2>
+        <div class="p-1 form-group">
+          <label for="nom"><strong>Présence:</strong></label>
+          <select
+            class="form-control"
+            id="presence"
+            v-model="etudiantSelectionne.presence"
+            name="presence"
+            selected = etudiantSelectionne.presence
+          >
+            <option value= true>Vrai</option>
+            <option value= false >Faux</option>
+          </select>
+        </div>
+        <div class="p-1 form-group">
+          <label for="prenom"><strong>Remise:</strong></label>
+          <select
+            class="form-control"
+            id="remise"
+            v-model="etudiantSelectionne.remis"
+            name="remise"
+            selected = etudiantSelectionne.remis
+          >
+            <option value= true>Vrai</option>
+            <option value= false>Faux</option>
+          </select>
+        </div>
+        <div class="p-1 form-group">
+          <label for="note"><strong>Note (0-20):</strong></label>
+          <input
+            type="number"
+            class="form-control"
+            id="note"
+            required
+            v-model="etudiantSelectionne.note"
+            name="note"
+            min= 0
+            max = 20
+          />
+        </div>
+        <div class="p-3">
+          <button @click="updateStudent" class="btn btn-success">Modifier</button>
+        </div>
+      </div>
+
       <div class="p-2">
         <label>{{ message }}</label>
       </div>
@@ -204,7 +250,7 @@
             <td>
               <button
                 :disabled="this.examenSelectionne.etat == 'Clos'"
-                @click="updateExam"
+                @click="getStudent(etudiant.numero)"
                 class="btn btn-success"
               >
                 Modifier
@@ -263,10 +309,12 @@ export default {
         numero: "",
       },
 
+      etudiantSelectionne: null,
       examenSelectionne: null,
       message: "",
       modifExam: false,
       ajoutEtudiant: false,
+      modifEtudiant: false,
     };
   },
   methods: {
@@ -276,7 +324,7 @@ export default {
           this.examenSelectionne = response.data;
         })
         .catch((e) => {
-          console.log(e);
+          this.message = e.response.data.message;
         });
     },
 
@@ -288,7 +336,7 @@ export default {
           this.refreshPage();
         })
         .catch((e) => {
-          console.log(e);
+          this.message = e.response.data.message;
         });
     },
 
@@ -302,7 +350,34 @@ export default {
           this.message = "L'examen a été modifié";
         })
         .catch((e) => {
-          console.log(e);
+          this.message = e.response.data.message;
+        });
+    },
+
+      updateStudent() {
+      ExamenDataService.updateStudent(
+        this.examenSelectionne._id,
+        this.etudiantSelectionne
+      )
+        .then((response) => {
+          console.log(response.data);
+          this.message = "L'etudiant a été modifié";
+          this.refreshPage();
+        })
+        .catch((e) => {
+          this.message = e.response.data.message;
+        });
+    },
+
+    getStudent(num) {
+      ExamenDataService.findAStudent(this.examenSelectionne._id, num)
+        .then((response) => {
+          console.log(response.data);
+          this.changeBoolean('modifEtudiant');
+          this.etudiantSelectionne = response.data;
+        })
+        .catch((e) => {
+          this.message = e.response.data.message;
         });
     },
 
@@ -342,19 +417,26 @@ export default {
         case "examen":
           this.modifExam = true;
           this.ajoutEtudiant = false;
+          this.modifEtudiant = false;
           break;
-        case "etudiant":
+        case "ajoutEtudiant":
           this.modifExam = false;
           this.ajoutEtudiant = true;
+          this.modifEtudiant = false;
+          break;
+        case "modifEtudiant":
+          this.modifExam = false;
+          this.ajoutEtudiant = false;
+          this.modifEtudiant = true;
           break;
         default:
           this.modifExam = false;
           this.ajoutEtudiant = false;
+          this.modifEtudiant = true;
       }
     },
     refreshPage() {
       this.etudiant = {};
-
       this.getExamen(this.$route.params.id);
     },
   },
