@@ -59,7 +59,7 @@
           </button>
         </div>
         <div class="p-1">
-          <button @click="updateExam" class="btn btn-danger">
+          <button @click="deleteExam" class="btn btn-danger">
             Supprimer l'examen
           </button>
         </div>
@@ -165,7 +165,7 @@
       </div>
 
       <div class="col submit-form p-2" v-if="modifEtudiant">
-        <h2>Etudiant numéro {{this.etudiantSelectionne.numero}}</h2>
+        <h2>Etudiant numéro {{ this.etudiantSelectionne.numero }}</h2>
         <div class="p-1 form-group">
           <label for="nom"><strong>Présence:</strong></label>
           <select
@@ -173,10 +173,10 @@
             id="presence"
             v-model="etudiantSelectionne.presence"
             name="presence"
-            selected = etudiantSelectionne.presence
+            selected="etudiantSelectionne.presence"
           >
-            <option value= true>Vrai</option>
-            <option value= false >Faux</option>
+            <option value="true">Vrai</option>
+            <option value="false">Faux</option>
           </select>
         </div>
         <div class="p-1 form-group">
@@ -186,10 +186,10 @@
             id="remise"
             v-model="etudiantSelectionne.remis"
             name="remise"
-            selected = etudiantSelectionne.remis
+            selected="etudiantSelectionne.remis"
           >
-            <option value= true>Vrai</option>
-            <option value= false>Faux</option>
+            <option value="true">Vrai</option>
+            <option value="false">Faux</option>
           </select>
         </div>
         <div class="p-1 form-group">
@@ -201,12 +201,14 @@
             required
             v-model="etudiantSelectionne.note"
             name="note"
-            min= 0
-            max = 20
+            min="0"
+            max="20"
           />
         </div>
         <div class="p-3">
-          <button @click="updateStudent" class="btn btn-success">Modifier</button>
+          <button @click="updateStudent" class="btn btn-success">
+            Modifier
+          </button>
         </div>
       </div>
 
@@ -354,7 +356,7 @@ export default {
         });
     },
 
-      updateStudent() {
+    updateStudent() {
       ExamenDataService.updateStudent(
         this.examenSelectionne._id,
         this.etudiantSelectionne
@@ -373,7 +375,7 @@ export default {
       ExamenDataService.findAStudent(this.examenSelectionne._id, num)
         .then((response) => {
           console.log(response.data);
-          this.changeBoolean('modifEtudiant');
+          this.changeBoolean("modifEtudiant");
           this.etudiantSelectionne = response.data;
         })
         .catch((e) => {
@@ -412,6 +414,20 @@ export default {
           this.message = e;
         });
     },
+
+    deleteExam() {
+      ExamenDataService.delete(this.examenSelectionne._id)
+        .then((response) => {
+          console.log(response.data);
+          this.examenSelectionne = null;
+          this.refreshList();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+         location.href = "/examens",true;
+    },
+
     changeBoolean(x) {
       switch (x) {
         case "examen":
