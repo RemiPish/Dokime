@@ -23,12 +23,12 @@
           {{ examenSelectionne.dateDebut }}
         </div>
         <div>
-          <label><strong>Etat:</strong></label>
-          {{ examenSelectionne.etat }}
+          <label><strong>mode:</strong></label>
+          {{ examenSelectionne.mode }}
         </div>
         <div class="p-1">
           <button
-            :disabled="this.examenSelectionne.etat == 'Clos'"
+            :disabled="this.examenSelectionne.mode == 'Clos'"
             @click="changeBoolean('examen')"
             class="btn btn-success"
           >
@@ -37,7 +37,7 @@
         </div>
         <div class="p-1">
           <button
-            :disabled="this.examenSelectionne.etat == 'Clos'"
+            :disabled="this.examenSelectionne.mode == 'Clos'"
             @click="changeBoolean('ajoutEtudiant')"
             class="btn btn-success"
           >
@@ -45,13 +45,16 @@
           </button>
         </div>
         <div class="p-1">
-          <button @click="updateExam" class="btn btn-primary">
-            Voir la feuille d'émargement
+          <button
+            @click="changeBoolean('pdfEmargement')"
+            class="btn btn-primary"
+          >
+            Télécharger la feuille d'émargement
           </button>
         </div>
         <div class="p-1">
           <button
-            :disabled="this.examenSelectionne.etat == 'Clos'"
+            :disabled="this.examenSelectionne.mode == 'Clos'"
             @click="closeExam"
             class="btn btn-warning"
           >
@@ -121,6 +124,19 @@
         </div>
         <div class="p-3">
           <button @click="updateExam" class="btn btn-success">Modifier</button>
+        </div>
+      </div>
+
+      <div class="col submit-form p-2" v-if="pdfEmargement">
+        <h2>Choisissez le format de la feuille d'émargement</h2>
+        <select class="form-control" id="format" name="format">
+          <option>1</option>
+          <option>2</option>
+        </select>
+        <div class="p-3">
+          <button @click="feuilleEmargement" class="btn btn-success">
+            Télécharger
+          </button>
         </div>
       </div>
 
@@ -251,7 +267,7 @@
             <td>{{ etudiant.note }}</td>
             <td>
               <button
-                :disabled="this.examenSelectionne.etat == 'Clos'"
+                :disabled="this.examenSelectionne.mode == 'Clos'"
                 @click="getStudent(etudiant.numero)"
                 class="btn btn-success"
               >
@@ -259,7 +275,7 @@
               </button>
               &nbsp;&nbsp;
               <button
-                :disabled="this.examenSelectionne.etat == 'Clos'"
+                :disabled="this.examenSelectionne.mode == 'Clos'"
                 @click="deleteAStudent(etudiant.numero)"
                 class="btn btn-danger"
               >
@@ -317,6 +333,7 @@ export default {
       modifExam: false,
       ajoutEtudiant: false,
       modifEtudiant: false,
+      pdfEmargement: false,
     };
   },
   methods: {
@@ -415,6 +432,10 @@ export default {
         });
     },
 
+    feuilleEmargement() {
+      const baseURL = ExamenDataService.getBaseURL();
+      window.open(baseURL+'/examens/'+this.examenSelectionne._id +'/pdf');
+    },
     deleteExam() {
       ExamenDataService.delete(this.examenSelectionne._id)
         .then((response) => {
@@ -425,7 +446,7 @@ export default {
         .catch((e) => {
           console.log(e);
         });
-         location.href = "/examens",true;
+      (location.href = "/examens"), true;
     },
 
     changeBoolean(x) {
@@ -434,23 +455,34 @@ export default {
           this.modifExam = true;
           this.ajoutEtudiant = false;
           this.modifEtudiant = false;
+          this.pdfEmargement = false;
           break;
         case "ajoutEtudiant":
           this.modifExam = false;
           this.ajoutEtudiant = true;
           this.modifEtudiant = false;
+          this.pdfEmargement = false;
           break;
         case "modifEtudiant":
           this.modifExam = false;
           this.ajoutEtudiant = false;
           this.modifEtudiant = true;
+          this.pdfEmargement = false;
+          break;
+        case "pdfEmargement":
+          this.modifExam = false;
+          this.ajoutEtudiant = false;
+          this.modifEtudiant = false;
+          this.pdfEmargement = true;
           break;
         default:
           this.modifExam = false;
           this.ajoutEtudiant = false;
-          this.modifEtudiant = true;
+          this.modifEtudiant = false;
+          this.pdfEmargement = false;
       }
     },
+
     refreshPage() {
       this.etudiant = {};
       this.getExamen(this.$route.params.id);

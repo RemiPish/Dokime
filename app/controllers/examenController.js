@@ -1,16 +1,142 @@
 const mongoose = require('mongoose');
 const examenModel = mongoose.model('Examen');
-const fs = require("fs");
+const fs = require("fs")
 const fastcsv = require("fast-csv");
+const PDFdoc = require("pdfkit");
+const qr = require("qr-image")
+
+function emargementHeader(doc, examen) {
+  doc
+    .fontSize(13)
+    .text(examen.titre, { align: "center" })
+    .fontSize(10)
+    .text(examen.universite, { align: "center" })
+    .text("Matière: " + examen.matiere, { align: "center" })
+    .text(examen.dateDebut + "    " + examen.heure, { align: "center" }).rect(45, 5, 540, doc.y + 2).stroke()
+    .moveDown();
+}
+
+function emargementListe(doc, examen, url) {
+  for (var i = 0; i < examen.listeEtudiants.length; i++) {
+
+    if (i % 20 == 0 && i != 0) {
+      doc.addPage({
+        margins: {
+          top: 20,
+          bottom: 20,
+          left: 72,
+          right: 72
+        }
+      });
+      emargementHeader(doc, examen);
+    }
+
+    var code = url + examen.id + examen.listeEtudiants[i].id.substr(examen.listeEtudiants[i].id.length - 3);
+    const qrcode = qr.imageSync(code, { type: 'png', margin: 0 });
+
+    doc.image(qrcode, doc.x, doc.y, { scale: 0.42 })
+    doc.rect(doc.x + 70, doc.y - 30, 90, 30).stroke()
+    doc.image(qrcode, doc.x + 170, doc.y - 50, { scale: 0.35 })
+
+    doc.fontSize(7).text("Signature", doc.x + 90, doc.y - 25)
+    doc.x -= 90
+    doc.y += 30
+    doc.text(examen.listeEtudiants[i].nom, doc.x + 70, doc.y - 70)
+    doc.x -= 70
+    doc.y += 70
+    doc.text(examen.listeEtudiants[i].prenom, doc.x + 70, doc.y - 70)
+    doc.x -= 70
+    doc.y += 70
+    doc.text(examen.listeEtudiants[i].numero, doc.x + 70, doc.y - 70)
+    doc.x -= 70
+    doc.y += 42
 
 
+    if (i <  examen.listeEtudiants.length-1) {
+      var code = url + examen.id + examen.listeEtudiants[i+1].id.substr(examen.listeEtudiants[i+1].id.length - 3);
+      const qrcode = qr.imageSync(code, { type: 'png', margin: 0 });
 
+      doc.image(qrcode, doc.x+245, doc.y-70, { scale: 0.42 })
+      doc.rect(doc.x + 315, doc.y - 40, 90, 30).stroke()
+      doc.image(qrcode, doc.x + 415, doc.y - 60, { scale: 0.35 })
+
+      doc.fontSize(7).text("Signature", doc.x + 335, doc.y - 35)
+      doc.x -= 335
+      doc.y += 30
+      doc.text(examen.listeEtudiants[i+1].nom, doc.x + 315, doc.y - 70)
+      doc.x -= 315
+      doc.y += 70
+      doc.text(examen.listeEtudiants[i].prenom, doc.x + 315, doc.y - 70)
+      doc.x -= 315
+      doc.y += 70
+      doc.text(examen.listeEtudiants[i].numero, doc.x + 315, doc.y - 70)
+      doc.x -= 315
+      doc.y += 43
+    }
+    i++
+  }
+
+}
 const getPagination = (page, size) => {
   const limit = size ? +size : 10;
   const offset = page ? page * limit : 1;
 
   return { limit, offset };
 };
+
+
+exports.feuilleEmargement = (req, res) => {
+  const id = req.params.id;
+
+  res.writeHead(200, {
+    'Content-Type': 'application/pdf',
+    'Access-Control-Allow-Origin': '*',
+    'Content-Disposition': 'inline; filename=FeuilleEmargement.pdf'
+  });
+  Examen.findById(id)
+    .then((data => {
+      var examen = {
+        id: "",
+        titre: "",
+        universite: "",
+        matiere: "",
+        dateDebut: "",
+        heure: "",
+        listeEtudiants: []
+      };
+      var doc = new PDFdoc({ autoFirstPage: false, size: 'A4' });
+      examen.id = data.id
+      examen.titre = data.titre
+      examen.universite = data.universite
+      examen.matiere = data.matiere
+      examen.dateDebut = data.dateDebut
+      examen.heure = data.heure
+      examen.listeEtudiants = data.listeEtudiants
+      doc.addPage({
+        margins: {
+          top: 20,
+          bottom: 20,
+          left: 72,
+          right: 72
+        }
+      });
+      emargementHeader(doc, examen);
+      emargementListe(doc, examen, req.headers.referer);
+      doc.pipe(res);
+      doc.end();
+    }))
+}
+
+function makeid(length) {
+  var result = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() *
+      charactersLength));
+  }
+  return result;
+}
 
 // Cree un examen
 exports.create = (req, res) => {
@@ -33,8 +159,10 @@ exports.create = (req, res) => {
     universite: req.body.universite,
     matiere: req.body.matiere,
     dateDebut: req.body.dateDebut,
-    etat: "En cours",
-    listeEtudiants: []
+    heure: req.body.heure,
+    mode: "Emargement",
+    listeEtudiants: [],
+    id: makeid(5)
   });
 
   // Sauvegarde examen dans la base de donnee
@@ -83,8 +211,8 @@ exports.updateStudent = (req, res) => {
   }
   const id = req.params.id;
   Examen.updateOne(
-    { "_id": id, "listeEtudiants.numero" : req.body.numero },
-    { "$set": { "listeEtudiants.$.presence": req.body.presence, "listeEtudiants.$.remis": req.body.remis, "listeEtudiants.$.note": req.body.note} } ,
+    { "_id": id, "listeEtudiants.numero": req.body.numero },
+    { "$set": { "listeEtudiants.$.presence": req.body.presence, "listeEtudiants.$.remis": req.body.remis, "listeEtudiants.$.note": req.body.note } },
     { runValidators: true, context: 'query' },
   )
     .then(data => {
@@ -111,7 +239,7 @@ exports.updateExam = (req, res) => {
 
   const id = req.params.id;
 
-  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false },  { runValidators: true, context: 'query' })
+  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false }, { runValidators: true, context: 'query' })
     .then(data => {
       if (!data) {
         res.status(404).send({
@@ -206,10 +334,10 @@ exports.closeExam = (req, res) => {
 
 exports.findAStudent = (req, res) => {
   const id = req.params.id;
-  Examen.findById(id).select({"listeEtudiants": {$elemMatch:{"numero" : req.params.numero}}})
+  Examen.findById(id).select({ "listeEtudiants": { $elemMatch: { "numero": req.params.numero } } })
     .then(data => {
       if (!data)
-        res.status(404).send({ message: "Etudiant non trouve avec l'id  " + req.params.numero});
+        res.status(404).send({ message: "Etudiant non trouve avec l'id  " + req.params.numero });
       else res.send(data.listeEtudiants[0]);
     })
     .catch(err => {
@@ -243,8 +371,10 @@ exports.createWithCsv = (req, res) => {
     universite: req.body.universite,
     matiere: req.body.matiere,
     dateDebut: req.body.dateDebut,
-    etat: "En cours",
-    listeEtudiants: []
+    heure: req.body.heure,
+    mode: "Emargement",
+    listeEtudiants: [],
+    id: makeid(5)
   });
   fs.createReadStream(req.file.path)
     .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
@@ -254,7 +384,7 @@ exports.createWithCsv = (req, res) => {
       examen.listeEtudiants.push({
         nom: data[0],
         prenom: data[1],
-        numero: data[2]
+        numero: data[2],
       })
     })
     .on("end", (rowCount) => {
@@ -267,6 +397,7 @@ exports.createWithCsv = (req, res) => {
               err.message || "Erreur pendant la création de l'examen"
           });
         }
+
         res.json(examenModel);
         fs.unlink(req.file.path, (err) => {
           if (err) {
@@ -319,3 +450,6 @@ exports.deleteAll = (req, res) => {
     });
 
 };
+
+
+

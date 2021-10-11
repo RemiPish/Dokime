@@ -68,8 +68,8 @@
           {{ examenSelectionne.dateDebut }}
         </div>
         <div>
-          <label><strong>Etat:</strong></label>
-          {{ examenSelectionne.etat }}
+          <label><strong>Mode:</strong></label>
+          {{ examenSelectionne.mode }}
         </div>
         <div>
           <label><strong>Nombre de candidats:</strong></label>
@@ -140,7 +140,7 @@ export default {
         this.page,
         this.pageSize
       );
-      ExamenDataService.getAll(params)
+      ExamenDataService.findAll(params)
         .then((response) => {
           const { examens, totalItems } = response.data;
           this.examens = examens;

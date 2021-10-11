@@ -38,9 +38,7 @@ mongoose
   });
   
 routes(app);
-app.get("/", (req, res) => {
-    res.json({ message: "Bienvenue dans l'application Dokime" });
-  });
+
 
 app.listen(port, () => {
     console.log(`Le serveur à l'écoute sur le port ${port}`);

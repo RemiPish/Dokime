@@ -1,10 +1,15 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const mongoosePaginate = require("mongoose-paginate-v2"); 
+const mongoosePaginate = require("mongoose-paginate-v2");
 const uniqueValidator = require('mongoose-unique-validator');
 
 
 const examenSchema = new Schema({
+
+    id: {
+        type: String,
+        required: true
+    },
     titre: {
         type: String,
         required: true
@@ -21,10 +26,10 @@ const examenSchema = new Schema({
     dateCloture: {
         type: Date,
     },
-    etat: {
+    mode: {
         type: String,
-        enum: ['En cours', 'Clos'],
-        required: true
+        enum: ['Emargement', 'Remise', 'Correction', 'Clos'],
+        default: 'Emargement'
     },
     listeEtudiants: [
         {
@@ -39,9 +44,6 @@ const examenSchema = new Schema({
             numero: {
                 type: String,
                 required: true,
-            },
-            code: {
-                type: String
             },
             presence: {
                 type: Boolean,

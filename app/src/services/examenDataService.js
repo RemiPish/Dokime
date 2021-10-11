@@ -1,57 +1,62 @@
-import http from "../http-common";
+import {examenInstance} from "../http-common";
 
 class ExamenDataService {
-  getAll(params) {
-    return http.get("/examens", { params });
+  findAll(params) {
+    return examenInstance.get("/examens", { params });
   }
 
   get(id) {
-    return http.get(`/examens/${id}`);
+    return examenInstance.get(`/examens/${id}`);
   }
 
   create(data) {
-    return http.post("/examens", data);
+    return examenInstance.post("/examens", data);
   }
 
   updateExam(id, data) {
-    return http.put(`/examens/${id}`, data);
+    return examenInstance.put(`/examens/${id}`, data);
   }
 
   updateStudent(id, data) {
-    return http.put(`/examens/etudiant/${id}`, data);
+    return examenInstance.put(`/examens/etudiant/${id}`, data);
   }
 
   closeExam(id)
   {
-    return http.put(`/examens/cloturerExamen/${id}`);
+    return examenInstance.put(`/examens/cloturerExamen/${id}`);
   }
 
   addAStudent(id, data) {
-    return http.put(`/examens/ajouterEtudiant/${id}`, data);
+    return examenInstance.put(`/examens/ajouterEtudiant/${id}`, data);
   }
 
   deleteAStudent(id, data) {
-    return http.put(`/examens/supprimerEtudiant/${id}`, data);
+    return examenInstance.put(`/examens/supprimerEtudiant/${id}`, data);
   }
 
   delete(id) {
-    return http.delete(`/examens/${id}`);
+    return examenInstance.delete(`/examens/${id}`);
   }
 
   deleteAll() {
-    return http.delete(`/examens`);
+    return examenInstance.delete(`/examens`);
+  }
+
+  getBaseURL()
+  {
+    return examenInstance.defaults.baseURL;
   }
 
   findAStudent(id, numero)
   {
-    return http.get(`/examens/etudiant/${id}/${numero}`);
+    return examenInstance.get(`/examens/etudiant/${id}/${numero}`);
   }
 
   findByTitle(titre) {
-    return http.get(`/examens?titre=${titre}`);
+    return examenInstance.get(`/examens?titre=${titre}`);
   }
   createWithCsv(file) {
-    return http.post("/examens/upload/", file, {
+    return examenInstance.post("/examens/upload/", file, {
       headers: {
         "Content-Type": "multipart/form-data"
       }

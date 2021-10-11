@@ -19,6 +19,11 @@ const routes = [
     path: "/creerExamen",
     name: "creer-examen",
     component: () => import("./components/CreerExamen")
+  },
+  {
+    path: "/:url",
+    name: "page-candidat",
+    component: () => import("./components/PageCandidat")
   }
 ];
 
