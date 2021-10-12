@@ -17,6 +17,7 @@ module.exports = app => {
   router.get("/:id", examens.findOneID);
   router.delete("/:id", examens.delete);
   router.get("/:id/pdf", examens.feuilleEmargement);
+  router.get("/candidat/:id", examens.findCandidatByURL)
 
 app.use('/api/examens', router);
 };

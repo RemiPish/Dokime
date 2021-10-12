@@ -367,6 +367,7 @@ export default {
         .then((response) => {
           console.log(response.data);
           this.message = "L'examen a été modifié";
+          this.modifExam = false;
         })
         .catch((e) => {
           this.message = e.response.data.message;
@@ -425,6 +426,7 @@ export default {
         .then((response) => {
           console.log(response.data);
           this.message = "L'étudiant a été supprimé de la liste de candidats!";
+          this.changeBoolean("all");
           this.refreshPage();
         })
         .catch((e) => {
@@ -451,6 +453,12 @@ export default {
 
     changeBoolean(x) {
       switch (x) {
+        case "all":
+          this.modifExam = false;
+          this.ajoutEtudiant = false;
+          this.modifEtudiant = false;
+          this.pdfEmargement = false;
+          break;
         case "examen":
           this.modifExam = true;
           this.ajoutEtudiant = false;

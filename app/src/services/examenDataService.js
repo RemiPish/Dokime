@@ -62,6 +62,11 @@ class ExamenDataService {
       }
     });
   }
+  
+  findCandidatByURL(id)
+  {
+    return examenInstance.get(`/examens/candidat/${id}`)
+  }
 }
 
 export default new ExamenDataService();

@@ -6,7 +6,7 @@ const uniqueValidator = require('mongoose-unique-validator');
 
 const examenSchema = new Schema({
 
-    id: {
+    eId: {
         type: String,
         required: true
     },
@@ -57,7 +57,8 @@ const examenSchema = new Schema({
                 type: Number,
                 min: 0,
                 max: 20
-            }
+            },
+            code:{ type:String}
         }
     ]
 });

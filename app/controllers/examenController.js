@@ -12,7 +12,7 @@ function emargementHeader(doc, examen) {
     .fontSize(10)
     .text(examen.universite, { align: "center" })
     .text("Matière: " + examen.matiere, { align: "center" })
-    .text(examen.dateDebut + "    " + examen.heure, { align: "center" }).rect(45, 5, 540, doc.y + 2).stroke()
+    .text(examen.dateDebut + "    " + examen.heure, { align: "center" })
     .moveDown();
 }
 
@@ -31,12 +31,12 @@ function emargementListe(doc, examen, url) {
       emargementHeader(doc, examen);
     }
 
-    var code = url + examen.id + examen.listeEtudiants[i].id.substr(examen.listeEtudiants[i].id.length - 3);
-    const qrcode = qr.imageSync(code, { type: 'png', margin: 0 });
+    var code = url + examen.eId + examen.listeEtudiants[i].code;
+    const qrcode = qr.imageSync(code, { type: 'png', margin: 0, ec_level: 'H' });
 
-    doc.image(qrcode, doc.x, doc.y, { scale: 0.42 })
+    doc.image(qrcode, doc.x, doc.y, { scale: 0.35 })
     doc.rect(doc.x + 70, doc.y - 30, 90, 30).stroke()
-    doc.image(qrcode, doc.x + 170, doc.y - 50, { scale: 0.35 })
+    doc.image(qrcode, doc.x + 170, doc.y - 57, { scale: 0.25 })
 
     doc.fontSize(7).text("Signature", doc.x + 90, doc.y - 25)
     doc.x -= 90
@@ -52,18 +52,18 @@ function emargementListe(doc, examen, url) {
     doc.y += 42
 
 
-    if (i <  examen.listeEtudiants.length-1) {
-      var code = url + examen.id + examen.listeEtudiants[i+1].id.substr(examen.listeEtudiants[i+1].id.length - 3);
-      const qrcode = qr.imageSync(code, { type: 'png', margin: 0 });
+    if (i < examen.listeEtudiants.length - 1) {
+      var code = url + examen.eId + examen.listeEtudiants[i + 1].id.substr(examen.listeEtudiants[i + 1].id.length - 3);
+      const qrcode = qr.imageSync(code, { type: 'png', margin: 0, ec_level: 'H' });
 
-      doc.image(qrcode, doc.x+245, doc.y-70, { scale: 0.42 })
+      doc.image(qrcode, doc.x + 245, doc.y - 67, { scale: 0.35 })
       doc.rect(doc.x + 315, doc.y - 40, 90, 30).stroke()
-      doc.image(qrcode, doc.x + 415, doc.y - 60, { scale: 0.35 })
+      doc.image(qrcode, doc.x + 415, doc.y - 65, { scale: 0.25 })
 
       doc.fontSize(7).text("Signature", doc.x + 335, doc.y - 35)
       doc.x -= 335
       doc.y += 30
-      doc.text(examen.listeEtudiants[i+1].nom, doc.x + 315, doc.y - 70)
+      doc.text(examen.listeEtudiants[i + 1].nom, doc.x + 315, doc.y - 70)
       doc.x -= 315
       doc.y += 70
       doc.text(examen.listeEtudiants[i].prenom, doc.x + 315, doc.y - 70)
@@ -96,7 +96,7 @@ exports.feuilleEmargement = (req, res) => {
   Examen.findById(id)
     .then((data => {
       var examen = {
-        id: "",
+        eId: "",
         titre: "",
         universite: "",
         matiere: "",
@@ -105,7 +105,7 @@ exports.feuilleEmargement = (req, res) => {
         listeEtudiants: []
       };
       var doc = new PDFdoc({ autoFirstPage: false, size: 'A4' });
-      examen.id = data.id
+      examen.eId = data.eId
       examen.titre = data.titre
       examen.universite = data.universite
       examen.matiere = data.matiere
@@ -127,20 +127,28 @@ exports.feuilleEmargement = (req, res) => {
     }))
 }
 
-function makeid(length) {
+function makeid(array, length) {
+  var bool = false;
   var result = '';
   var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() *
-      charactersLength));
+  while (!bool) {
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() *
+        charactersLength));
+
+    }
+    if (!array.includes(result)) {
+      array.push(result);
+      bool = true;
+    }
   }
   return result;
 }
 
 // Cree un examen
 exports.create = (req, res) => {
-  console.log(req.body);
+  var examIDList = []
   //Valider requete 
   if (!req.body.titre) {
 
@@ -152,29 +160,38 @@ exports.create = (req, res) => {
     res.status(400).send({ message: "L'université ne peut pas être vide!" });
     return;
   }
+  Examen.find({}, '-_id').select("eId").then(data => {
+    for (var elt in data)
+      examIDList.push(data[elt].eId)
 
-  // Cree examen
-  const examen = new examenModel({
-    titre: req.body.titre,
-    universite: req.body.universite,
-    matiere: req.body.matiere,
-    dateDebut: req.body.dateDebut,
-    heure: req.body.heure,
-    mode: "Emargement",
-    listeEtudiants: [],
-    id: makeid(5)
-  });
+    examIDList = Object.values(examIDList);
+    // Cree examen
+    const examen = new examenModel({
+      titre: req.body.titre,
+      universite: req.body.universite,
+      matiere: req.body.matiere,
+      dateDebut: req.body.dateDebut,
+      heure: req.body.heure,
+      mode: "Emargement",
+      listeEtudiants: [],
+      eId: makeid(examIDList, 5)
+    });
 
-  // Sauvegarde examen dans la base de donnee
-  examen.save((err, examenModel) => {
-    if (err) {
-      res.status(500).send({
-        message:
-          err.message || "Erreur pendant la création de l'examen"
-      });
-    }
-    res.json(examenModel);
-  });
+    // Sauvegarde examen dans la base de donnee
+    examen.save((err, examenModel) => {
+      if (err) {
+        res.status(500).send({
+          message:
+            err.message || "Erreur pendant la création de l'examen"
+        });
+      }
+      res.json(examenModel);
+    });
+  })
+    .catch(err => {
+      console.log(err)
+    });
+
 };
 
 // Cherche tous les examens/un examen par titre
@@ -238,8 +255,7 @@ exports.updateExam = (req, res) => {
   }
 
   const id = req.params.id;
-
-  Examen.findByIdAndUpdate(id, req.body, { useFindAndModify: false }, { runValidators: true, context: 'query' })
+  Examen.findByIdAndUpdate(id, req.body)
     .then(data => {
       if (!data) {
         res.status(404).send({
@@ -250,7 +266,7 @@ exports.updateExam = (req, res) => {
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Erreur durant la modification de l'examen ayany l'id=" + id
+          err.message || "Erreur durant la modification de l'examen ayant l'id=" + id
       });
     });
 };
@@ -315,7 +331,7 @@ exports.closeExam = (req, res) => {
   const id = req.params.id;
   Examen.updateOne(
     { "_id": id },
-    { "$set": { "etat": "Clos" } }
+    { "$set": { "mode": "Clos" } }
   )
     .then(data => {
       if (!data) {
@@ -366,49 +382,61 @@ exports.findOneID = (req, res) => {
 
 // Mettre a jour l'examen
 exports.createWithCsv = (req, res) => {
-  const examen = new examenModel({
-    titre: req.body.titre,
-    universite: req.body.universite,
-    matiere: req.body.matiere,
-    dateDebut: req.body.dateDebut,
-    heure: req.body.heure,
-    mode: "Emargement",
-    listeEtudiants: [],
-    id: makeid(5)
-  });
-  fs.createReadStream(req.file.path)
-    .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
-    .on("error", (error) => console.error(error))
-    .on("data", function (data) {
+  var examIDList = [];
+  const codeList = [];
 
-      examen.listeEtudiants.push({
-        nom: data[0],
-        prenom: data[1],
-        numero: data[2],
+  Examen.find({}, '-_id').select("eId").then(data => {
+    for (var elt in data)
+      examIDList.push(data[elt].eId)
+
+    examIDList = Object.values(examIDList);
+
+    const examen = new examenModel({
+      titre: req.body.titre,
+      universite: req.body.universite,
+      matiere: req.body.matiere,
+      dateDebut: req.body.dateDebut,
+      heure: req.body.heure,
+      mode: "Emargement",
+      listeEtudiants: [],
+      eId: makeid(examIDList, 5)
+    });
+    fs.createReadStream(req.file.path)
+      .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
+      .on("error", (error) => console.error(error))
+      .on("data", function (data) {
+
+        examen.listeEtudiants.push({
+          nom: data[0],
+          prenom: data[1],
+          numero: data[2],
+          code: makeid(codeList, 3),
+        })
       })
-    })
-    .on("end", (rowCount) => {
-      examen.listeEtudiants.shift();
-      console.log(rowCount);
-      examen.save((err, examenModel) => {
-        if (err) {
-          res.status(500).send({
-            message:
-              err.message || "Erreur pendant la création de l'examen"
+      .on("end", () => {
+        examen.listeEtudiants.shift();
+        examen.save((err, examenModel) => {
+          if (err) {
+            res.status(500).send({
+              message:
+                err.message || "Erreur pendant la création de l'examen"
+            });
+          }
+
+
+          res.json(examenModel);
+          fs.unlink(req.file.path, (err) => {
+            if (err) {
+              console.error(err)
+              return
+            }
           });
         }
-
-        res.json(examenModel);
-        fs.unlink(req.file.path, (err) => {
-          if (err) {
-            console.error(err)
-            return
-          }
-        });
+        )
       }
       )
-    }
-    )
+
+  })
 };
 
 // Supprime un examen avec l'id
@@ -436,7 +464,7 @@ exports.delete = (req, res) => {
 
 // supprimer tous les examens
 exports.deleteAll = (req, res) => {
-  Examen.deleteMany({})
+  Examen.deleteMany()
     .then(data => {
       res.send({
         message: `${data.deletedCount} examens ont ete supprimes`
@@ -452,4 +480,37 @@ exports.deleteAll = (req, res) => {
 };
 
 
+exports.findCandidatByURL = (req, res) => {
 
+
+  const examenID = req.params.id.substr(0, 5)
+  const candidatID = req.params.id.substr(5, 7)
+  Examen.findOne({ "eId": examenID }, '-_id').where("listeEtudiants").elemMatch({ "code": candidatID })
+    .then(response => {
+      if (!response) {
+        res.status(404).send({
+          message: "Candidat non trouve avec l'id"
+        });
+      } else {
+        const candidat = response.listeEtudiants.find(candidat => { return candidat.code === candidatID })
+        var data = {
+          titre: response.titre,
+          universite: response.universite,
+          matiere: response.matiere,
+          dateDebut: response.dateDebut,
+          heure: response.heure,
+          nom: candidat.nom,
+          prenom: candidat.prenom,
+          numero: candidat.numero,
+          note: candidat.note
+        }
+        res.send(data);
+      }
+    }).catch(err => {
+      console.log(err)
+      res.status(500).send({
+        message:
+          err.message
+      });
+    });
+};
