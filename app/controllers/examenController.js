@@ -53,8 +53,8 @@ function emargementListe(doc, examen, url) {
 
 
     if (i < examen.listeEtudiants.length - 1) {
-      var code = url + examen.eId + examen.listeEtudiants[i + 1].id.substr(examen.listeEtudiants[i + 1].id.length - 3);
-      const qrcode = qr.imageSync(code, { type: 'png', margin: 0, ec_level: 'H' });
+      var code2 = url + examen.eId + examen.listeEtudiants[i+1].code;
+      const qrcode = qr.imageSync(code2, { type: 'png', margin: 0, ec_level: 'H' });
 
       doc.image(qrcode, doc.x + 245, doc.y - 67, { scale: 0.35 })
       doc.rect(doc.x + 315, doc.y - 40, 90, 30).stroke()
@@ -66,10 +66,10 @@ function emargementListe(doc, examen, url) {
       doc.text(examen.listeEtudiants[i + 1].nom, doc.x + 315, doc.y - 70)
       doc.x -= 315
       doc.y += 70
-      doc.text(examen.listeEtudiants[i].prenom, doc.x + 315, doc.y - 70)
+      doc.text(examen.listeEtudiants[i + 1].prenom, doc.x + 315, doc.y - 70)
       doc.x -= 315
       doc.y += 70
-      doc.text(examen.listeEtudiants[i].numero, doc.x + 315, doc.y - 70)
+      doc.text(examen.listeEtudiants[i + 1].numero, doc.x + 315, doc.y - 70)
       doc.x -= 315
       doc.y += 43
     }
@@ -306,25 +306,32 @@ exports.addAStudent = (req, res) => {
     });
   }
   const id = req.params.id;
+  var codeList = [];
+  
+  Examen.findById(id, '-_id').select("listeEtudiants.code").then(data=> {
+    
+    codeList = data.listeEtudiants.map(a => a.code);
 
-  Examen.updateOne(
-    { "_id": id },
-    { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero } } },
-    { runValidators: true, context: 'query' },
-  )
-    .then(data => {
-      if (!data) {
-        res.status(404).send({
-          message: `L'Etudiant n'a pas pu etre ajouté! `
+    Examen.updateOne(
+      { "_id": id },
+      { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero, "code": makeid(codeList,3) } } },
+      { runValidators: true, context: 'query' },
+    )
+      .then(data2 => {
+        if (!data2) {
+          res.status(404).send({
+            message: `L'Etudiant n'a pas pu etre ajouté! `
+          });
+        } else res.send({ message: req.body.numero });
+      })
+      .catch(err => {
+        res.status(500).send({
+          message:
+            err.message || `Erreur durant l'ajout d'un etudiant pour l'examen ${id}`
         });
-      } else res.send({ message: req.body.numero });
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || `Erreur durant l'ajout d'un etudiant pour l'examen ${id}`
       });
-    });
+  })
+  
 };
 
 exports.closeExam = (req, res) => {

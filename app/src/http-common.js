@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const examenInstance = axios.create({
-  baseURL: "http://localhost:3080/api",
+  baseURL: "https://localhost:3080/api",
   headers: {
     "Content-type": "application/json",
     'Access-Control-Allow-Origin' : '*',

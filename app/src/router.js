@@ -24,6 +24,11 @@ const routes = [
     path: "/:url",
     name: "page-candidat",
     component: () => import("./components/PageCandidat")
+  },
+  {
+    path: "/scanner",
+    name: "scanner",
+    component: () => import("./components/QRScanner")
   }
 ];
 

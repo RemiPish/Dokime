@@ -25,7 +25,7 @@
       <h4>La note du copie n'a pas encore été attributée pour le moment! Celle-ci s'affichera sur cette page à la fin de la correction de l'examen.</h4>
     </div>
 </div>
-  <div class="col p-5" v-else>
+  <div class="" v-else>
     <h3>Examen ou candidat non trouvé!</h3>
   </div>
 </template>
@@ -34,7 +34,7 @@
 import ExamenDataService from "../services/examenDataService.js";
 
 export default {
-  name: "Examen",
+  name: "page-candidat",
   data() {
     return {
       information: null,

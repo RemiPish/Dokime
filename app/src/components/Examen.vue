@@ -318,7 +318,7 @@
 import ExamenDataService from "../services/examenDataService.js";
 
 export default {
-  name: "Examen",
+  name: "examen-detail",
   data() {
     return {
       etudiant: {
