@@ -12,11 +12,19 @@
           style="transform: scaleX(-1)"
         ></video>
         <div>
-          <button @click="qrStart()" class="btn btn-success">
+          <button
+            :disabled="this.examenSelectionne.mode !== 'Emargement'"
+            @click="qrStart()"
+            class="btn btn-success"
+          >
             Démarrer la caméra
           </button>
           &nbsp;&nbsp;
-          <button @click="qrStop()" class="btn btn-danger">
+          <button
+            :disabled="this.examenSelectionne.mode !== 'Emargement'"
+            @click="qrStop()"
+            class="btn btn-danger"
+          >
             Arrêter la caméra
           </button>
         </div>
@@ -58,9 +66,17 @@
             {{ nbRemise }}
           </div>
         </div>
-        <button class="m-3 btn btn-sm btn-success" @click="deleteAllExams">
-        Terminer l'épreuve
-      </button>
+        <button
+          class="m-3 btn btn-sm btn-success"
+          :disabled="
+            examenSelectionne.mode !== 'Emargement' ||
+            nbPresence === 0 ||
+            nbPresence != nbRemise
+          "
+          @click="terminerExam()"
+        >
+          Terminer l'épreuve
+        </button>
       </div>
     </div>
     <div v-if="urlExiste" class="p-4">
@@ -85,6 +101,31 @@
         <button @click="resetPage()" class="btn btn-danger">Annuler</button>
       </div>
     </div>
+    <div>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Numéro d'étudiants</th>
+            <th>Présence</th>
+            <th>Remise de copie</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="etudiant in examenSelectionne.listeEtudiants"
+            :key="etudiant._id"
+          >
+            <td>{{ etudiant.nom }}</td>
+            <td>{{ etudiant.prenom }}</td>
+            <td>{{ etudiant.numero }}</td>
+            <td>{{ etudiant.presence }}</td>
+            <td>{{ etudiant.remis }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -98,7 +139,6 @@ export default {
     return {
       urlExiste: false,
       scanner: null,
-      copie: {},
       message: "",
       etudiantSelectionne: {
         nom: "",
@@ -112,6 +152,7 @@ export default {
         matiere: "",
         heure: "",
         date: "",
+        mode: "Emargement",
         listeEtudiants: [],
       },
 
@@ -120,8 +161,7 @@ export default {
       nbRemise: 0,
       action: "",
 
-      presenceL: [],
-      remiseL: [],
+      etudiantCode: "",
     };
   },
   methods: {
@@ -137,6 +177,7 @@ export default {
               this.examenSelectionne.matiere = response.data.matiere;
               this.examenSelectionne.heure = response.data.heure;
               this.examenSelectionne.date = response.data.dateDebut;
+              this.examenSelectionne.mode = response.data.mode;
               this.examenSelectionne.listeEtudiants =
                 response.data.listeEtudiants;
 
@@ -169,6 +210,9 @@ export default {
         this.examenSelectionne.date = JSON.parse(
           localStorage.getItem(this.$route.params.id)
         ).date;
+        this.examenSelectionne.mode = JSON.parse(
+          localStorage.getItem(this.$route.params.id)
+        ).mode;
 
         this.examenSelectionne.listeEtudiants = JSON.parse(
           localStorage.getItem(this.$route.params.id)
@@ -191,6 +235,7 @@ export default {
     qrStart() {
       this.scanner.start();
       this.urlExiste = false;
+      this.message = "";
     },
     qrStop() {
       this.scanner.stop();
@@ -210,7 +255,7 @@ export default {
           ).length > 0
         ) {
           this.urlExiste = true;
-
+          this.etudiantCode = etudiantID;
           this.etudiantSelectionne.nom =
             this.examenSelectionne.listeEtudiants.filter(
               (e) => e.code === etudiantID
@@ -224,86 +269,71 @@ export default {
               (e) => e.code === etudiantID
             )[0].numero;
 
-          if (
-            localStorage.getItem(this.$route.params.id + "_PresenceList") != []
-          ) {
-            this.presenceL = JSON.parse(
-              localStorage.getItem(this.$route.params.id + "_PresenceList")
-            );
-          }
-          if (
-            localStorage.getItem(this.$route.params.id + "_RemiseList") != []
-          ) {
-            this.remiseL = JSON.parse(
-              localStorage.getItem(this.$route.params.id + "_RemiseList")
-            );
-          }
-
-          if (this.presenceL === null) {
-            this.action = "Présence";
-            this.presenceL = [];
-            this.presenceL[0] = etudiantID;
-          } else if (!this.presenceL.includes(etudiantID)) {
-            this.action = "Présence";
-            this.presenceL.push(etudiantID);
-          } else {
-            if (this.remiseL === null) {
-              this.action = "Remise de copie";
-              this.remiseL = [];
-              this.remiseL[0] = etudiantID;
-            } else if (!this.remiseL.includes(etudiantID)) {
-              this.action = "Remise de copie";
-              this.remiseL.push(etudiantID);
-            } else {
-              this.urlExiste = false;
-              this.message = "La copie est déjà remise!";
+          this.examenSelectionne.listeEtudiants.map((e) => {
+            if (e.code === etudiantID) {
+              if (e.presence === false) this.action = "Présence";
+              else if (e.remis === false) this.action = "Remise de copie";
+              else {
+                this.urlExiste = false;
+                this.message = "La copie est déjà remise!";
+              }
             }
-          }
+          });
         } else this.message = "Le code QR n'est pas valide!";
       } else this.message = "Le code QR n'est pas valide!";
       this.qrStop();
     },
     actionValider() {
       if (this.action === "Présence") {
-        localStorage.setItem(
-          this.$route.params.id + "_PresenceList",
-          JSON.stringify(this.presenceL)
-        );
-
-        console.log(
-          "Presence : " +
-            localStorage.getItem(this.$route.params.id + "_PresenceList")
-        );
+        this.examenSelectionne.listeEtudiants.map((e) => {
+          if (e.code === this.etudiantCode) e.presence = true;
+        });
       } else if (this.action === "Remise de copie") {
-        localStorage.setItem(
-          this.$route.params.id + "_RemiseList",
-          JSON.stringify(this.remiseL)
-        );
-        console.log(
-          "Remise : " +
-            localStorage.getItem(this.$route.params.id + "_RemiseList")
-        );
+        this.examenSelectionne.listeEtudiants.map((e) => {
+          if (e.code === this.etudiantCode) e.remis = true;
+        });
       }
+      localStorage.setItem(
+        this.$route.params.id,
+        JSON.stringify(this.examenSelectionne)
+      );
+      console.log(
+        JSON.parse(localStorage.getItem(this.$route.params.id)).listeEtudiants
+      );
       this.resetPage();
     },
     resetPage() {
       this.urlExiste = false;
       this.action = "";
-      if (localStorage.getItem(this.$route.params.id + "_PresenceList") != null)
-        this.nbPresence = JSON.parse(
-          localStorage.getItem(this.$route.params.id + "_PresenceList")
-        ).length;
-      if (localStorage.getItem(this.$route.params.id + "_RemiseList") != null)
-        this.nbRemise = JSON.parse(
-          localStorage.getItem(this.$route.params.id + "_RemiseList")
-        ).length;
+      this.etudiantCode = "";
+
+      this.nbPresence = this.examenSelectionne.listeEtudiants.filter(
+        (e) => e.presence === true
+      ).length;
+      this.nbRemise = this.examenSelectionne.listeEtudiants.filter(
+        (e) => e.remis === true
+      ).length;
+    },
+
+    terminerExam() {
+      var req = {
+        listeEtudiants: this.examenSelectionne.listeEtudiants,
+      };
+      ExamenDataService.stopExam(this.$route.params.id, req)
+        .then((response) => {
+          this.examenSelectionne.mode = "Correction";
+          localStorage.clear();
+          this.message = response.data.message;
+        })
+        .catch((e) => {
+          this.message = e.response.data.message;
+        });
     },
   },
 
   mounted() {
-    this.resetPage();
     this.evaluationInit(this.$route.params.id);
-    console.log(localStorage);
+    this.resetPage();
   },
 };
 </script>

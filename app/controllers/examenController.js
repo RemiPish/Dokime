@@ -287,6 +287,32 @@ exports.updateExam = (req, res) => {
     });
 };
 
+exports.stopExam = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+
+  const id = req.params.id;
+  Examen.updateOne(
+    { "_id": id },
+    { "$set": { "listeEtudiants": req.body.listeEtudiants, "mode": 'Correction' } })
+    .then(data => {
+      if (!data) {
+        res.status(404).send({
+          message: `L'examen ayant l'id=${id} n'a pas été trouvé!`
+        });
+      } else res.send({ message: "Les données d'émargement ont été envoyées!" });
+    })
+    .catch(err => {
+      res.status(500).send({
+        message:
+          err.message || "Erreur durant la modification de l'examen ayant l'id=" + id
+      });
+    });
+};
+
 exports.deleteAStudent = (req, res) => {
   if (!req.body) {
     return res.status(400).send({

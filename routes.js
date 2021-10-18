@@ -6,6 +6,7 @@ module.exports = app => {
 
   router.post("/", examens.create);
   router.put("/:id", examens.updateExam);
+  router.put("/evaluation/:id", examens.stopExam);
   router.put("/etudiant/:id", examens.updateStudent);
   router.put("/supprimerEtudiant/:id", examens.deleteAStudent);
   router.put("/ajouterEtudiant/:id", examens.addAStudent);

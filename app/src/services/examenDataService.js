@@ -18,6 +18,10 @@ class ExamenDataService {
     return examenInstance.put(`/examens/${id}`, data);
   }
 
+  stopExam(id, data) {
+    return examenInstance.put(`/examens/evaluation/${id}`, data);
+  }
+
   updateStudent(id, data) {
     return examenInstance.put(`/examens/etudiant/${id}`, data);
   }
