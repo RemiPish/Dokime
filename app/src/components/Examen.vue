@@ -10,20 +10,20 @@
           <label><strong>Université:</strong></label>
           {{ examenSelectionne.universite }}
         </div>
-        <div>
+        <div v-if="examenSelectionne.matiere != ''">
           <label><strong>Matière:</strong></label>
           {{ examenSelectionne.matiere }}
         </div>
-        <div>
+        <div v-if="examenSelectionne.heure != ''">
           <label><strong>Heure de l'epreuve:</strong></label>
           {{ examenSelectionne.heure }}
         </div>
-        <div>
+        <div v-if="examenSelectionne.dateDebut != ''">
           <label><strong>Date du debut de l'epreuve:</strong></label>
           {{ examenSelectionne.dateDebut }}
         </div>
         <div>
-          <label><strong>mode:</strong></label>
+          <label><strong>Mode:</strong></label>
           {{ examenSelectionne.mode }}
         </div>
         <div class="p-1">
@@ -129,10 +129,6 @@
 
       <div class="col submit-form p-2" v-if="pdfEmargement">
         <h2>Choisissez le format de la feuille d'émargement</h2>
-        <select class="form-control" id="format" name="format">
-          <option>1</option>
-          <option>2</option>
-        </select>
         <div class="p-3">
           <button @click="feuilleEmargement" class="btn btn-success">
             Télécharger
@@ -287,31 +283,6 @@
       </table>
     </div>
   </div>
-
-  <!--button class="badge badge-primary mr-2"
-      v-if="examenSelectionne.published"
-      @click="updatePublished(false)"
-    >
-      UnPublish
-    </button>
-    <button v-else class="badge badge-primary mr-2"
-      @click="updatePublished(true)"
-    >
-      Publish
-    </button>
-
-    <button class="badge badge-danger mr-2"
-      @click="deleteExamen"
-    >
-      Delete
-    </button>
-
-    <button type="submit" class="badge badge-success"
-      @click="updateExam"
-    >
-      Update
-        
-    </button-->
 </template>
 
 <script>
@@ -436,7 +407,7 @@ export default {
 
     feuilleEmargement() {
       const baseURL = ExamenDataService.getBaseURL();
-      window.open(baseURL+'/examens/'+this.examenSelectionne._id +'/pdf');
+      window.open(baseURL + "/examens/" + this.examenSelectionne._id + "/pdf");
     },
     deleteExam() {
       ExamenDataService.delete(this.examenSelectionne._id)

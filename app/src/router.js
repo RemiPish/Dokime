@@ -26,9 +26,9 @@ const routes = [
     component: () => import("./components/PageCandidat")
   },
   {
-    path: "/scanner",
-    name: "scanner",
-    component: () => import("./components/QRScanner")
+    path: "/evaluation/:id",
+    name: "evaluation",
+    component: () => import("./components/Evaluation")
   }
 ];
 

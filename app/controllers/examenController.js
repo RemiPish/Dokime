@@ -16,8 +16,24 @@ function emargementHeader(doc, examen) {
     .moveDown();
 }
 
+//https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+function dynamicSort(property) {
+  var sortOrder = 1;
+  if (property[0] === "-") {
+    sortOrder = -1;
+    property = property.substr(1);
+  }
+  return function (a, b) {
+    var result =
+      a[property] < b[property] ? -1 : a[property] > b[property] ? 1 : 0;
+    return result * sortOrder;
+  };
+}
+
 function emargementListe(doc, examen, url) {
-  for (var i = 0; i < examen.listeEtudiants.length; i++) {
+  const liste = examen.listeEtudiants;
+  liste.sort(dynamicSort("nom"));
+  for (var i = 0; i < liste.length; i++) {
 
     if (i % 20 == 0 && i != 0) {
       doc.addPage({
@@ -53,7 +69,7 @@ function emargementListe(doc, examen, url) {
 
 
     if (i < examen.listeEtudiants.length - 1) {
-      var code2 = url + examen.eId + examen.listeEtudiants[i+1].code;
+      var code2 = url + examen.eId + examen.listeEtudiants[i + 1].code;
       const qrcode = qr.imageSync(code2, { type: 'png', margin: 0, ec_level: 'H' });
 
       doc.image(qrcode, doc.x + 245, doc.y - 67, { scale: 0.35 })
@@ -91,7 +107,7 @@ exports.feuilleEmargement = (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'application/pdf',
     'Access-Control-Allow-Origin': '*',
-    'Content-Disposition': 'inline; filename=FeuilleEmargement.pdf'
+    'Content-Disposition': 'attachment; filename=FeuilleEmargement.pdf'
   });
   Examen.findById(id)
     .then((data => {
@@ -194,11 +210,11 @@ exports.create = (req, res) => {
 
 };
 
-// Cherche tous les examens/un examen par titre
+// Cherche tous les examens/un examen par mode
 exports.findAll = (req, res) => {
-  const { page, size, titre } = req.query;
-  var condition = titre
-    ? { titre: { $regex: new RegExp(titre), $options: "i" } }
+  const { page, size, mode } = req.query;
+  var condition = mode
+    ? { mode: { $regex: new RegExp(mode), $options: "i" } }
     : {};
 
   const { limit, offset } = getPagination(page, size);
@@ -307,14 +323,14 @@ exports.addAStudent = (req, res) => {
   }
   const id = req.params.id;
   var codeList = [];
-  
-  Examen.findById(id, '-_id').select("listeEtudiants.code").then(data=> {
-    
+
+  Examen.findById(id, '-_id').select("listeEtudiants.code").then(data => {
+
     codeList = data.listeEtudiants.map(a => a.code);
 
     Examen.updateOne(
       { "_id": id },
-      { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero, "code": makeid(codeList,3) } } },
+      { "$push": { "listeEtudiants": { "nom": req.body.nom, "prenom": req.body.prenom, "numero": req.body.numero, "code": makeid(codeList, 3) } } },
       { runValidators: true, context: 'query' },
     )
       .then(data2 => {
@@ -331,7 +347,7 @@ exports.addAStudent = (req, res) => {
         });
       });
   })
-  
+
 };
 
 exports.closeExam = (req, res) => {
@@ -378,7 +394,11 @@ exports.findOneID = (req, res) => {
     .then(data => {
       if (!data)
         res.status(404).send({ message: "Examen non trouve avec l'id  " + id });
-      else res.send(data);
+      else 
+      {
+        data.listeEtudiants.sort(dynamicSort("nom"))
+        res.send(data);
+      }
     })
     .catch(err => {
       res
@@ -489,6 +509,11 @@ exports.deleteAll = (req, res) => {
 
 exports.findCandidatByURL = (req, res) => {
 
+  if (req.params.id.length !== 8) {
+    return res.status(400).send({
+      message: "Mauvais url"
+    });
+  }
 
   const examenID = req.params.id.substr(0, 5)
   const candidatID = req.params.id.substr(5, 7)
@@ -506,6 +531,7 @@ exports.findCandidatByURL = (req, res) => {
           matiere: response.matiere,
           dateDebut: response.dateDebut,
           heure: response.heure,
+          mode: response.mode,
           nom: candidat.nom,
           prenom: candidat.prenom,
           numero: candidat.numero,

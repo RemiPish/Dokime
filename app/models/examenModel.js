@@ -28,7 +28,7 @@ const examenSchema = new Schema({
     },
     mode: {
         type: String,
-        enum: ['Emargement', 'Remise', 'Correction', 'Clos'],
+        enum: ['Emargement', 'Correction', 'Clos'],
         default: 'Emargement'
     },
     listeEtudiants: [

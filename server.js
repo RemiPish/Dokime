@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require("cors");
 global.Examen = require('./app/models/examenModel');
-const routes = require('./app/routes')
+const routes = require('./routes')
 const mongoose = require('mongoose');
 const fs = require('fs')
 const https = require('https');

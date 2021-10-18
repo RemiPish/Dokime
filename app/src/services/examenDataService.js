@@ -1,6 +1,7 @@
 import {examenInstance} from "../http-common";
 
 class ExamenDataService {
+  
   findAll(params) {
     return examenInstance.get("/examens", { params });
   }

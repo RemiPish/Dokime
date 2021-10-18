@@ -1,38 +1,28 @@
 <template>
   <div class="list row">
-    <!--div class="col-md-8">
-      <div class="input-group mb-3">
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Rechercher un examen"
-          v-model="chercheTitre"
-        />
-        <div class="input-group-append">
-          <button
-            class="btn btn-outline-secondary"
-            type="button"
-            @click="rechercheTitre()"
-          >
-            Trouver
-          </button>
-        </div>
-      </div>
-    </div-->
-
     <div class="col-md-6">
       <h4>Liste d'examens</h4>
-      <ul class="list-group" id="examens-liste">
-        <li
-          class="list-group-item"
-          :class="{ active: index == currentIndex }"
-          v-for="(examen, index) in examens"
-          :key="index"
-          @click="setActiveExamen(examen, index)"
-        >
-          {{ examen.titre }}
-        </li>
-      </ul>
+      <div class="p-3">
+        <select @change="getAllExams(this.mode)" id="liste"  v-model="mode">
+          <option value="" >Tous les examens</option>
+          <option value="Emargement">Examens en cours d'émargement</option>
+          <option value="Correction">Examens en cours de correction</option>
+           <option value="Clos">Examens clos</option>
+        </select>
+      </div>
+      <div>
+        <ul class="list-group" id="examens-liste">
+          <li
+            class="list-group-item"
+            :class="{ active: index == currentIndex }"
+            v-for="(examen, index) in examens"
+            :key="index"
+            @click="setActiveExamen(examen, index)"
+          >
+            {{ examen.titre }}
+          </li>
+        </ul>
+      </div>
       <div class="card-footer pb-0 pt-3">
         <v-pagination
           v-model="page"
@@ -55,15 +45,15 @@
           <label><strong>Université:</strong></label>
           {{ examenSelectionne.universite }}
         </div>
-        <div>
+        <div v-if ="examenSelectionne.matiere != ''">
           <label><strong>Matière:</strong></label>
           {{ examenSelectionne.matiere }}
         </div>
-        <div>
+        <div  v-if ="examenSelectionne.heure != ''">
           <label><strong>Heure de l'epreuve:</strong></label>
           {{ examenSelectionne.heure }}
         </div>
-        <div>
+        <div  v-if ="examenSelectionne.dateDebut != ''">
           <label><strong>Date du debut de l'epreuve:</strong></label>
           {{ examenSelectionne.dateDebut }}
         </div>
@@ -76,18 +66,22 @@
           {{ examenSelectionne.listeEtudiants.length }}
         </div>
         <a
-          class="m-3 btn btn-sm btn-success"    
+          class="m-3 btn btn-sm btn-success"
           :href="'/examens/' + examenSelectionne._id"
         >
           Gérer
         </a>
-        <button
-          class="m-3 btn btn-sm btn-danger"
-          @click="deleteAnExam"
+        <a
+          class="m-3 btn btn-sm btn-primary"
+           v-if="examenSelectionne.mode == 'Emargement'"
+          :href="'/evaluation/' + examenSelectionne._id"
         >
+          Evaluation
+        </a>
+
+        <button class="m-3 btn btn-sm btn-danger" @click="deleteAnExam">
           Supprimer
         </button>
-        
       </div>
     </div>
   </div>
@@ -107,8 +101,8 @@ export default {
     return {
       examens: [],
       examenSelectionne: null,
-      chercheTitre: "",
       currentIndex: -1,
+      mode:"",
 
       page: 1,
       count: 0,
@@ -116,11 +110,11 @@ export default {
     };
   },
   methods: {
-    getRequestParams(chercheTitre, page, pageSize) {
+    getRequestParams(mode, page, pageSize) {
       let params = {};
 
-      if (chercheTitre) {
-        params["titre"] = chercheTitre;
+      if (mode) {
+        params["mode"] = mode;
       }
 
       if (page) {
@@ -134,9 +128,9 @@ export default {
       return params;
     },
 
-    getAllExams() {
+    getAllExams(m) {
       const params = this.getRequestParams(
-        this.chercheTitre,
+        m,
         this.page,
         this.pageSize
       );
@@ -181,9 +175,8 @@ export default {
         });
     },
 
-    deleteAnExam() 
-    {
-         ExamenDataService.delete(this.examenSelectionne._id)
+    deleteAnExam() {
+      ExamenDataService.delete(this.examenSelectionne._id)
         .then((response) => {
           console.log(response.data);
           this.examenSelectionne = null;
@@ -193,20 +186,10 @@ export default {
           console.log(e);
         });
     },
-
-    /*rechercheTitre() {
-      ExamenDataService.findByTitle(this.titre)
-        .then((response) => {
-          this.examens = response.data;
-          console.log(response.data);
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-    },*/
   },
   mounted() {
     this.getAllExams();
+    console.log(localStorage)
   },
 };
 </script>

@@ -9,9 +9,6 @@
         <li class="nav-item">
           <router-link to="/creerExamen" class="nav-link">Créer</router-link>
         </li>
-        <li class="nav-item">
-          <router-link to="/scanner" class="nav-link">Scanner</router-link>
-        </li>
       </div>
     </nav>
 
