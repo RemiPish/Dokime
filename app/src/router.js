@@ -26,9 +26,14 @@ const routes = [
     component: () => import("./components/PageCandidat")
   },
   {
-    path: "/evaluation/:id",
-    name: "evaluation",
-    component: () => import("./components/Evaluation")
+    path: "/emargement/:id",
+    name: "emargement",
+    component: () => import("./components/Emargement")
+  },
+  {
+    path: "/correction",
+    name: "correcion",
+    component: () => import("./components/Correction")
   }
 ];
 

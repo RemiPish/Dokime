@@ -1,8 +1,9 @@
 <template>
   <div>
     <div class="row">
+      <h1>Emargement</h1>
       <div class="col p-2">
-        <h1>Scanner le code QR:</h1>
+        <h3>Scanner le code QR:</h3>
         <video
           width="320"
           height="240"
@@ -14,18 +15,9 @@
         <div>
           <button
             :disabled="this.examenSelectionne.mode !== 'Emargement'"
-            @click="qrStart()"
-            class="btn btn-success"
+            @click="cameraButton()"
           >
-            Démarrer la caméra
-          </button>
-          &nbsp;&nbsp;
-          <button
-            :disabled="this.examenSelectionne.mode !== 'Emargement'"
-            @click="qrStop()"
-            class="btn btn-danger"
-          >
-            Arrêter la caméra
+            {{ cameraText }}
           </button>
         </div>
         <div class="p-2">
@@ -70,17 +62,18 @@
           class="m-3 btn btn-sm btn-success"
           :disabled="
             examenSelectionne.mode !== 'Emargement' ||
-            nbPresence === 0 ||
-            nbPresence != nbRemise
+            (nbPresence === 0 && nbRemise === 0)
           "
-          @click="terminerExam()"
+          @click="envoyerEmargement()"
         >
-          Terminer l'épreuve
+          Envoyer la liste
+        </button>
+        <button @click="generateCSV()" class="m-3 btn btn-sm btn-info">
+          Générer un fichier .csv
         </button>
       </div>
     </div>
     <div v-if="urlExiste" class="p-4">
-      <h3>{{ action }}</h3>
       <div>
         <label><strong>Nom: </strong></label>
         {{ etudiantSelectionne.nom }}
@@ -94,8 +87,20 @@
         {{ etudiantSelectionne.numero }}
       </div>
       <div>
-        <button @click="actionValider()" class="btn btn-success">
-          Valider
+        <button
+          :disabled="etudiantSelectionne.presence === true"
+          @click="actionValider('presence')"
+          class="btn btn-success"
+        >
+          Présence
+        </button>
+        &nbsp;&nbsp;
+        <button
+          :disabled="etudiantSelectionne.remis === true"
+          @click="actionValider('remise')"
+          class="btn btn-success"
+        >
+          Remise
         </button>
         &nbsp;&nbsp;
         <button @click="resetPage()" class="btn btn-danger">Annuler</button>
@@ -144,6 +149,8 @@ export default {
         nom: "",
         prenom: "",
         numero: "",
+        presence: false,
+        remis: false,
       },
       examenSelectionne: {
         eid: "",
@@ -156,41 +163,26 @@ export default {
         listeEtudiants: [],
       },
 
+      emargement: {
+        examen_eid: "",
+        presence: [],
+        remis: [],
+      },
+
       nbEtudiants: 0,
       nbPresence: 0,
       nbRemise: 0,
-      action: "",
 
       etudiantCode: "",
+      cameraText: "Démarrer la caméra",
+      cameraMode: "Off",
     };
   },
   methods: {
     evaluationInit(id) {
       this.qrInit();
       if (!localStorage.getItem(this.$route.params.id)) {
-        ExamenDataService.get(id)
-          .then((response) => {
-            if (response.data != null) {
-              this.examenSelectionne.eid = response.data.eId;
-              this.examenSelectionne.titre = response.data.titre;
-              this.examenSelectionne.universite = response.data.universite;
-              this.examenSelectionne.matiere = response.data.matiere;
-              this.examenSelectionne.heure = response.data.heure;
-              this.examenSelectionne.date = response.data.dateDebut;
-              this.examenSelectionne.mode = response.data.mode;
-              this.examenSelectionne.listeEtudiants =
-                response.data.listeEtudiants;
-
-              localStorage.setItem(
-                this.$route.params.id,
-                JSON.stringify(this.examenSelectionne)
-              );
-              this.nbEtudiants = this.examenSelectionne.listeEtudiants.length;
-            }
-          })
-          .catch((e) => {
-            this.message = e.response.data.message;
-          });
+        this.mettreAJour(id);
       } else {
         this.examenSelectionne.eid = JSON.parse(
           localStorage.getItem(this.$route.params.id)
@@ -217,7 +209,24 @@ export default {
         this.examenSelectionne.listeEtudiants = JSON.parse(
           localStorage.getItem(this.$route.params.id)
         ).listeEtudiants;
-        this.nbEtudiants = this.examenSelectionne.listeEtudiants.length;
+      }
+      this.nbEtudiants = this.examenSelectionne.listeEtudiants.length;
+      if (!localStorage.getItem("Emargement_" + this.$route.params.id)) {
+        this.emargement.examen_eid = this.examenSelectionne.eid;
+        localStorage.setItem(
+          "Emargement_" + this.$route.params.id,
+          JSON.stringify(this.emargement)
+        );
+      } else {
+        this.emargement.examen_eid = JSON.parse(
+          localStorage.getItem("Emargement_" + this.$route.params.id)
+        ).examen_eid;
+        this.emargement.presence = JSON.parse(
+          localStorage.getItem("Emargement_" + this.$route.params.id)
+        ).presence;
+        this.emargement.remis = JSON.parse(
+          localStorage.getItem("Emargement_" + this.$route.params.id)
+        ).remis;
       }
     },
 
@@ -232,14 +241,28 @@ export default {
         }
       );
     },
+
+    cameraButton() {
+      if (this.cameraMode === "Off") {
+        this.qrStart();
+      } else if (this.cameraMode === "On") {
+        this.qrStop();
+      }
+    },
+
     qrStart() {
       this.scanner.start();
       this.urlExiste = false;
       this.message = "";
+      this.cameraText = "Arrêter la caméra";
+      this.cameraMode = "On";
     },
     qrStop() {
       this.scanner.stop();
+      this.cameraMode = "Off";
+      this.cameraText = "Démarrer la caméra";
     },
+
     qrResult(result) {
       if (result.length == 31) {
         const baseURL = window.location.origin + "/";
@@ -268,12 +291,18 @@ export default {
             this.examenSelectionne.listeEtudiants.filter(
               (e) => e.code === etudiantID
             )[0].numero;
+          this.etudiantSelectionne.presence =
+            this.examenSelectionne.listeEtudiants.filter(
+              (e) => e.code === etudiantID
+            )[0].presence;
+          this.etudiantSelectionne.remis =
+            this.examenSelectionne.listeEtudiants.filter(
+              (e) => e.code === etudiantID
+            )[0].remis;
 
           this.examenSelectionne.listeEtudiants.map((e) => {
             if (e.code === etudiantID) {
-              if (e.presence === false) this.action = "Présence";
-              else if (e.remis === false) this.action = "Remise de copie";
-              else {
+              if (e.presence === true && e.remis === true) {
                 this.urlExiste = false;
                 this.message = "La copie est déjà remise!";
               }
@@ -283,28 +312,42 @@ export default {
       } else this.message = "Le code QR n'est pas valide!";
       this.qrStop();
     },
-    actionValider() {
-      if (this.action === "Présence") {
+    actionValider(action) {
+      if (action === "presence") {
         this.examenSelectionne.listeEtudiants.map((e) => {
-          if (e.code === this.etudiantCode) e.presence = true;
+          if (e.code === this.etudiantCode) {
+            e.presence = true;
+            if (this.emargement.presence === []) {
+              this.emargement.presence = [this.etudiantCode];
+            } else this.emargement.presence.push(this.etudiantCode);
+          }
         });
-      } else if (this.action === "Remise de copie") {
+      } else if (action === "remise") {
         this.examenSelectionne.listeEtudiants.map((e) => {
-          if (e.code === this.etudiantCode) e.remis = true;
+          if (e.code === this.etudiantCode) {
+            e.remis = true;
+            if (this.emargement.remis === []) {
+              this.emargement.remis = [this.etudiantCode];
+            } else this.emargement.remis.push(this.etudiantCode);
+          }
         });
+        console.log(this.emargement);
       }
+      localStorage.setItem(
+        "Emargement_" + this.$route.params.id,
+        JSON.stringify(this.emargement)
+      );
       localStorage.setItem(
         this.$route.params.id,
         JSON.stringify(this.examenSelectionne)
       );
       console.log(
-        JSON.parse(localStorage.getItem(this.$route.params.id)).listeEtudiants
+        JSON.parse(localStorage.getItem("Emargement_" + this.$route.params.id))
       );
       this.resetPage();
     },
     resetPage() {
       this.urlExiste = false;
-      this.action = "";
       this.etudiantCode = "";
 
       this.nbPresence = this.examenSelectionne.listeEtudiants.filter(
@@ -315,19 +358,55 @@ export default {
       ).length;
     },
 
-    terminerExam() {
-      var req = {
-        listeEtudiants: this.examenSelectionne.listeEtudiants,
-      };
-      ExamenDataService.stopExam(this.$route.params.id, req)
+    mettreAJour(id) {
+      ExamenDataService.get(id)
         .then((response) => {
-          this.examenSelectionne.mode = "Correction";
-          localStorage.clear();
+          if (response.data != null) {
+            this.examenSelectionne.eid = response.data.eId;
+            this.examenSelectionne.titre = response.data.titre;
+            this.examenSelectionne.universite = response.data.universite;
+            this.examenSelectionne.matiere = response.data.matiere;
+            this.examenSelectionne.heure = response.data.heure;
+            this.examenSelectionne.date = response.data.dateDebut;
+            this.examenSelectionne.mode = response.data.mode;
+            this.examenSelectionne.listeEtudiants =
+              response.data.listeEtudiants;
+            localStorage.setItem(
+              this.$route.params.id,
+              JSON.stringify(this.examenSelectionne)
+            );
+          }
+        })
+        .catch((e) => {
+          this.message = e.response.data.message;
+        });
+    },
+
+    envoyerEmargement() {
+      ExamenDataService.updateEmargement(this.$route.params.id, this.emargement)
+        .then((response) => {
           this.message = response.data.message;
         })
         .catch((e) => {
           this.message = e.response.data.message;
         });
+    },
+    generateCSV() {
+      const titre = this.examenSelectionne.eid + "_Emargement.csv"
+     
+      var rows = [["eId", "code", "presence", "remis"]]
+      this.examenSelectionne.listeEtudiants.forEach((elt) => rows.push([this.examenSelectionne.eid, elt.code, elt.presence, elt.remis]))
+      let csvContent =
+        "data:text/csv;charset=utf-8," +
+        rows.map((e) => e.join(",")).join("\n");
+
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", titre);
+      document.body.appendChild(link); 
+
+      link.click(); 
     },
   },
 

@@ -3,7 +3,8 @@ const examenModel = mongoose.model('Examen');
 const fs = require("fs")
 const fastcsv = require("fast-csv");
 const PDFdoc = require("pdfkit");
-const qr = require("qr-image")
+const qr = require("qr-image");
+const { truncate } = require('lodash');
 
 function emargementHeader(doc, examen) {
   doc
@@ -182,7 +183,7 @@ exports.create = (req, res) => {
 
     examIDList = Object.values(examIDList);
     // Cree examen
-    const examen = new examenModel({
+    var examen = new examenModel({
       titre: req.body.titre,
       universite: req.body.universite,
       matiere: req.body.matiere,
@@ -190,9 +191,9 @@ exports.create = (req, res) => {
       heure: req.body.heure,
       mode: "Emargement",
       listeEtudiants: [],
-      eId: makeid(examIDList, 5)
+      eId: makeid(examIDList, 5),
     });
-
+    examen.codeCorrecteur = examen.eId + makeid([], 5)
     // Sauvegarde examen dans la base de donnee
     examen.save((err, examenModel) => {
       if (err) {
@@ -287,7 +288,7 @@ exports.updateExam = (req, res) => {
     });
 };
 
-exports.stopExam = (req, res) => {
+exports.updateEmargement = (req, res) => {
   if (!req.body) {
     return res.status(400).send({
       message: "Donnée vide"
@@ -296,14 +297,63 @@ exports.stopExam = (req, res) => {
 
   const id = req.params.id;
   Examen.updateOne(
-    { "_id": id },
-    { "$set": { "listeEtudiants": req.body.listeEtudiants, "mode": 'Correction' } })
+    { "_id": id, "listeEtudiants.code": { $in: req.body.presence } },
+    { "$set": { "listeEtudiants.$[a].presence": true } },
+    { "arrayFilters": [{ "a.code": { $in: req.body.presence } }] }
+  )
     .then(data => {
       if (!data) {
         res.status(404).send({
           message: `L'examen ayant l'id=${id} n'a pas été trouvé!`
         });
-      } else res.send({ message: "Les données d'émargement ont été envoyées!" });
+      }
+      else {
+        Examen.updateOne(
+          { "_id": id, "listeEtudiants.code": { $in: req.body.remis } },
+          { "$set": { "listeEtudiants.$[a].remis": true } },
+          { "arrayFilters": [{ "a.code": { $in: req.body.remis } }] })
+          .then(data2 => {
+            if (!data2) {
+              res.status(404).send({
+                message: `L'examen ayant l'id=${id} n'a pas été trouvé!`
+              });
+            }
+            else
+              res.send({ message: "Les données d'émargement ont été envoyées!" });
+          })
+          .catch(err => {
+            res.status(500).send({
+              message:
+                err.message || "Erreur durant la modification de l'examen ayant l'id=" + id
+            });
+          });
+      }
+
+    })
+};
+
+exports.updateNote = (req, res) => {
+  if (!req.body) {
+    return res.status(400).send({
+      message: "Donnée vide"
+    });
+  }
+  const examenID = req.body.code.substr(0, 5)
+  const candidatID = req.body.code.substr(5, 7)
+  Examen.updateOne(
+    { "codeCorrecteur": req.params.id, "eId": examenID, "listeEtudiants.code": candidatID },
+    { "$set": { "listeEtudiants.$.note": req.body.note } },
+  )
+    .then(data => {
+      if (!data || data.matchedCount === 0) {
+        res.status(404).send({
+          message: `Le code correcteur n'est pas bon ou la copie n'a pas été trouvée!`
+        });
+      }
+
+      else
+        res.send({ message: "La note a été envoyée!" });
+
     })
     .catch(err => {
       res.status(500).send({
@@ -420,8 +470,7 @@ exports.findOneID = (req, res) => {
     .then(data => {
       if (!data)
         res.status(404).send({ message: "Examen non trouve avec l'id  " + id });
-      else 
-      {
+      else {
         data.listeEtudiants.sort(dynamicSort("nom"))
         res.send(data);
       }
@@ -444,7 +493,7 @@ exports.createWithCsv = (req, res) => {
 
     examIDList = Object.values(examIDList);
 
-    const examen = new examenModel({
+    var examen = new examenModel({
       titre: req.body.titre,
       universite: req.body.universite,
       matiere: req.body.matiere,
@@ -452,8 +501,10 @@ exports.createWithCsv = (req, res) => {
       heure: req.body.heure,
       mode: "Emargement",
       listeEtudiants: [],
-      eId: makeid(examIDList, 5)
+      eId: makeid(examIDList, 5),
+
     });
+    examen.codeCorrecteur = examen.eId + makeid([], 5)
     fs.createReadStream(req.file.path)
       .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
       .on("error", (error) => console.error(error))
@@ -490,6 +541,88 @@ exports.createWithCsv = (req, res) => {
       )
 
   })
+};
+
+exports.emargementCsv = (req, res) => {
+  var liste = [];
+  fs.createReadStream(req.file.path)
+    .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
+    .on("error", (error) => console.error(error))
+    .on("data", function (data) {
+
+      liste.push({
+        eid: data[0],
+        code: data[1],
+        presence: data[2],
+        remis: data[3]
+      })
+    })
+    .on("end", () => {
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error(err)
+          return
+        }
+      });
+      liste.shift();
+      liste.map((e) => {
+        if (e.presence === 'true') e.presence = true
+        if (e.remis === 'true') e.remis = true
+        if (e.presence === 'false') e.presence = false
+        if (e.remis === 'false') e.remis = false
+      })
+      var updates = [];
+      liste.forEach(elt => {
+        var updatePromise = Examen.updateOne(
+          { "eId": elt.eid, "listeEtudiants.code": elt.code },
+          { "$set": { "listeEtudiants.$.presence": elt.presence, "listeEtudiants.$.remis": elt.remis } },
+        )
+        updates.push(updatePromise)
+      }
+      );
+      Promise.all(updates).then(results => res.send(results))
+
+    });
+
+};
+
+exports.notesCsv = (req, res) => {
+
+  var liste = [];
+  fs.createReadStream(req.file.path)
+    .pipe(fastcsv.parse({ header: true, ignoreEmpty: true, trim: true }))
+    .on("error", (error) => console.error(error))
+    .on("data", function (data) {
+
+      liste.push({
+        eid: data[0].substr(0, 5),
+        code: data[0].substr(5, 7),
+        note: data[1]
+      })
+
+    })
+    .on("end", () => {
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error(err)
+          return
+        }
+      });
+      liste.shift();
+      console.log(liste)
+      var updates = [];
+      liste.forEach(elt => {
+        var updatePromise = Examen.updateOne(
+          { "eId": elt.eid, "listeEtudiants.code": elt.code },
+          { "$set": { "listeEtudiants.$.note": elt.note } },
+        )
+        updates.push(updatePromise)
+      }
+      );
+      Promise.all(updates).then(results => res.send(results))
+
+    }
+    )
 };
 
 // Supprime un examen avec l'id

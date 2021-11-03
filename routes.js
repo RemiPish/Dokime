@@ -6,12 +6,15 @@ module.exports = app => {
 
   router.post("/", examens.create);
   router.put("/:id", examens.updateExam);
-  router.put("/evaluation/:id", examens.stopExam);
+  router.put("/emargement/:id", examens.updateEmargement);
+  router.put("/correction/:id", examens.updateNote);
   router.put("/etudiant/:id", examens.updateStudent);
   router.put("/supprimerEtudiant/:id", examens.deleteAStudent);
   router.put("/ajouterEtudiant/:id", examens.addAStudent);
   router.put("/cloturerExamen/:id", examens.closeExam);
   router.post("/upload", upload.single('file'), examens.createWithCsv);
+  router.post("/emargement", upload.single('file'), examens.emargementCsv);
+  router.post("/notes", upload.single('file'), examens.notesCsv);
   router.delete("/",examens.deleteAll);
   router.get("/etudiant/:id/:numero", examens.findAStudent);
   router.get("/", examens.findAll);

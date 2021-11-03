@@ -3,11 +3,11 @@
     <div class="col-md-6">
       <h4>Liste d'examens</h4>
       <div class="p-3">
-        <select @change="getAllExams(this.mode)" id="liste"  v-model="mode">
-          <option value="" >Tous les examens</option>
+        <select @change="getAllExams(this.mode)" id="liste" v-model="mode">
+          <option value="">Tous les examens</option>
           <option value="Emargement">Examens en cours d'émargement</option>
           <option value="Correction">Examens en cours de correction</option>
-           <option value="Clos">Examens clos</option>
+          <option value="Clos">Examens clos</option>
         </select>
       </div>
       <div>
@@ -45,15 +45,15 @@
           <label><strong>Université:</strong></label>
           {{ examenSelectionne.universite }}
         </div>
-        <div v-if ="examenSelectionne.matiere != ''">
+        <div v-if="examenSelectionne.matiere != ''">
           <label><strong>Matière:</strong></label>
           {{ examenSelectionne.matiere }}
         </div>
-        <div  v-if ="examenSelectionne.heure != ''">
+        <div v-if="examenSelectionne.heure != ''">
           <label><strong>Heure de l'epreuve:</strong></label>
           {{ examenSelectionne.heure }}
         </div>
-        <div  v-if ="examenSelectionne.dateDebut != ''">
+        <div v-if="examenSelectionne.dateDebut != ''">
           <label><strong>Date du debut de l'epreuve:</strong></label>
           {{ examenSelectionne.dateDebut }}
         </div>
@@ -73,15 +73,53 @@
         </a>
         <a
           class="m-3 btn btn-sm btn-primary"
-           v-if="examenSelectionne.mode == 'Emargement'"
-          :href="'/evaluation/' + examenSelectionne._id"
+          v-if="examenSelectionne.mode == 'Emargement'"
+          :href="'/emargement/' + examenSelectionne._id"
         >
-          Evaluation
+          Emargement
         </a>
 
         <button class="m-3 btn btn-sm btn-danger" @click="deleteAnExam">
           Supprimer
         </button>
+      </div>
+    </div>
+    <div>
+      <div class="p-3 form-group">
+        <label for="fichierPrésence"
+          >Importer le fichier .csv de la feuille de présence :</label
+        >
+        <input
+          class="form-control"
+          id="emargementFile"
+          type="file"
+          ref="emargementFile"
+          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+          @change="onChangeFileUpload('Emargement')"
+        />
+        <div class="p-3">
+          <button @click="emargementCSV" class="btn btn-success">
+            Ajouter
+          </button>
+        </div>
+      </div>
+      <div class="p-3 form-group">
+        <label for="fichierPrésence"
+          >Importer le fichier .csv de la feuille des notes :</label
+        >
+        <input
+          class="form-control"
+          id="notesFile"
+          type="file"
+          ref="notesFile"
+          accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+          @change="onChangeFileUpload('Notes')"
+        />
+        <div class="p-3">
+          <button @click="notesCSV" class="btn btn-success">
+            Ajouter
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -102,11 +140,13 @@ export default {
       examens: [],
       examenSelectionne: null,
       currentIndex: -1,
-      mode:"",
+      mode: "",
 
       page: 1,
       count: 0,
       pageSize: 10,
+      emargementFile: undefined,
+      notesFile: undefined,
     };
   },
   methods: {
@@ -129,11 +169,7 @@ export default {
     },
 
     getAllExams(m) {
-      const params = this.getRequestParams(
-        m,
-        this.page,
-        this.pageSize
-      );
+      const params = this.getRequestParams(m, this.page, this.pageSize);
       ExamenDataService.findAll(params)
         .then((response) => {
           const { examens, totalItems } = response.data;
@@ -186,10 +222,25 @@ export default {
           console.log(e);
         });
     },
+    onChangeFileUpload(csv) {
+      if (csv === "Emargement")
+        this.emargementFile = this.$refs.emargementFile.files[0];
+      else if (csv === "Notes")
+        this.notesFile = this.$refs.notesFile.files[0];
+    },
+    emargementCSV() {
+      let formData = new FormData();
+      formData.append("file", this.emargementFile);
+      ExamenDataService.emargementCsv(formData);
+    },
+    notesCSV() {
+      let formData = new FormData();
+      formData.append("file", this.notesFile);
+      ExamenDataService.notesCsv(formData);
+    },
   },
   mounted() {
     this.getAllExams();
-    console.log(localStorage)
   },
 };
 </script>

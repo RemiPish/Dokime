@@ -12,7 +12,6 @@
     "@mdi/font": "5.9.55",
     "axios": "^0.21.3",
     "core-js": "^3.6.5",
-    "fast-csv": "^4.3.6",
     "glob-parent": "^6.0.1",
     "mongoose-paginate-v2": "^1.4.2",
     "pdfkit": "^0.12.3",

@@ -22,6 +22,10 @@
           <label><strong>Date du debut de l'epreuve:</strong></label>
           {{ examenSelectionne.dateDebut }}
         </div>
+        <div >
+          <label><strong>Code Correcteur:</strong></label>
+          {{ examenSelectionne.codeCorrecteur}}
+        </div>
         <div>
           <label><strong>Mode:</strong></label>
           {{ examenSelectionne.mode }}
@@ -37,28 +41,10 @@
         </div>
         <div class="p-1">
           <button
-            :disabled="this.examenSelectionne.mode == 'Clos'"
-            @click="changeBoolean('ajoutEtudiant')"
-            class="btn btn-success"
-          >
-            Ajouter un étudiant
-          </button>
-        </div>
-        <div class="p-1">
-          <button
             @click="changeBoolean('pdfEmargement')"
             class="btn btn-primary"
           >
-            Télécharger la feuille d'émargement
-          </button>
-        </div>
-        <div class="p-1">
-          <button
-            :disabled="this.examenSelectionne.mode == 'Clos'"
-            @click="closeExam"
-            class="btn btn-warning"
-          >
-            Clôturer l'examen
+            Télécharger
           </button>
         </div>
         <div class="p-1">
@@ -122,16 +108,36 @@
             name="heure"
           />
         </div>
+          <div class="p-1 form-group">
+          <label for="nom"><strong>Présence:</strong></label>
+          <select
+            class="form-control"
+            id="mode"
+            v-model="examenSelectionne.mode"
+            name="mode"
+            selected="examenSelectionne.mode"
+          >
+            <option value="Emargement">Emargement</option>
+            <option value="Correction">Correction</option>
+            <option value="Clos">Clos</option>
+          </select>
+        </div>
+        
         <div class="p-3">
           <button @click="updateExam" class="btn btn-success">Modifier</button>
         </div>
       </div>
 
       <div class="col submit-form p-2" v-if="pdfEmargement">
-        <h2>Choisissez le format de la feuille d'émargement</h2>
+        <h2>Choisissez le document à télécharger </h2>
         <div class="p-3">
           <button @click="feuilleEmargement" class="btn btn-success">
-            Télécharger
+            Feuille d'émargement
+          </button>
+        </div>
+        <div class="p-3">
+          <button @click="feuilleEmargement" class="btn btn-success">
+            Résultat de l'examen
           </button>
         </div>
       </div>
@@ -234,6 +240,15 @@
             ><strong>Nombre de candidats:</strong></label
           >
           {{ examenSelectionne.listeEtudiants.length }}
+        </div>
+        <div class="p-1">
+          <button
+            :disabled="this.examenSelectionne.mode == 'Clos'"
+            @click="changeBoolean('ajoutEtudiant')"
+            class="btn btn-success"
+          >
+            Ajouter un étudiant
+          </button>
         </div>
       </div>
     </div>
@@ -429,18 +444,21 @@ export default {
           this.ajoutEtudiant = false;
           this.modifEtudiant = false;
           this.pdfEmargement = false;
+
           break;
         case "examen":
           this.modifExam = true;
           this.ajoutEtudiant = false;
           this.modifEtudiant = false;
           this.pdfEmargement = false;
+
           break;
         case "ajoutEtudiant":
           this.modifExam = false;
           this.ajoutEtudiant = true;
           this.modifEtudiant = false;
           this.pdfEmargement = false;
+
           break;
         case "modifEtudiant":
           this.modifExam = false;
@@ -454,6 +472,12 @@ export default {
           this.modifEtudiant = false;
           this.pdfEmargement = true;
           break;
+        case "importCsv":
+          this.modifExam = false;
+          this.ajoutEtudiant = false;
+          this.modifEtudiant = false;
+          this.pdfEmargement = false;
+           break;
         default:
           this.modifExam = false;
           this.ajoutEtudiant = false;

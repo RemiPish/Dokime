@@ -7,7 +7,10 @@
           <router-link to="/examens" class="nav-link">Examens</router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/creerExamen" class="nav-link">Créer</router-link>
+          <router-link to="/creerExamen" class="nav-link">Créer un examen</router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/correction" class="nav-link">Corriger une copie</router-link>
         </li>
       </div>
     </nav>

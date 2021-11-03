@@ -31,6 +31,7 @@ const examenSchema = new Schema({
         enum: ['Emargement', 'Correction', 'Clos'],
         default: 'Emargement'
     },
+    codeCorrecteur:{ type: String},
     listeEtudiants: [
         {
             nom: {
@@ -56,9 +57,11 @@ const examenSchema = new Schema({
             note: {
                 type: Number,
                 min: 0,
-                max: 20
+                max: 20,
+                default: 0
             },
-            code:{ type:String}
+            code: { type: String },
+            commentaire: { type: String }
         }
     ]
 });

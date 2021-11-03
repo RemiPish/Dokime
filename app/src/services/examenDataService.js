@@ -18,8 +18,12 @@ class ExamenDataService {
     return examenInstance.put(`/examens/${id}`, data);
   }
 
-  stopExam(id, data) {
-    return examenInstance.put(`/examens/evaluation/${id}`, data);
+  updateEmargement(id, data) {
+    return examenInstance.put(`/examens/emargement/${id}`, data);
+  }
+
+  updateNote(id, data) {
+    return examenInstance.put(`/examens/correction/${id}`, data);
   }
 
   updateStudent(id, data) {
@@ -62,6 +66,20 @@ class ExamenDataService {
   }
   createWithCsv(file) {
     return examenInstance.post("/examens/upload/", file, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+  }
+  emargementCsv(file) {
+    return examenInstance.post("/examens/emargement/", file, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+  }
+  notesCsv(file) {
+    return examenInstance.post("/examens/notes/", file, {
       headers: {
         "Content-Type": "multipart/form-data"
       }
