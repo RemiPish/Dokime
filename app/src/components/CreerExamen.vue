@@ -3,17 +3,20 @@
     <div class="header">
       <h1>Créer un examen</h1>
     </div>
-    <div v-if="!submitted">
+
+    <div v-if="!valide">
       <div class="p-3 form-group">
         <label for="titre">Titre</label>
         <input
           type="text"
           class="form-control"
           id="titre"
-          required
           v-model="examen.titre"
           name="titre"
         />
+        <span v-if="v$.examen.titre.$error" class="messageErreur">
+          Le titre ne doit pas être vide!
+        </span>
       </div>
 
       <div class="p-3 form-group">
@@ -21,10 +24,12 @@
         <input
           class="form-control"
           id="universite"
-          required
           v-model="examen.universite"
           name="universite"
         />
+        <span v-if="v$.examen.universite.$error" class="messageErreur">
+          L'universite ne doit pas être vide!
+        </span>
       </div>
 
       <div class="p-3 form-group">
@@ -46,14 +51,31 @@
           v-model="examen.dateDebut"
           name="dateDebut"
         />
+        <span v-if="v$.examen.dateDebut.$error" class="messageErreur">
+          La date de debut de l'épreuve ne doit pas être vide!
+        </span>
       </div>
       <div class="p-3 form-group">
         <label for="heure">Heure de l'épreuve</label>
         <input
+          type="time"
           class="form-control"
           id="heure"
           v-model="examen.heure"
           name="heure"
+        />
+         <span v-if="v$.examen.heure.$error" class="messageErreur">
+          L'heure de l'épreuve ne doit pas être vide!
+        </span>
+      </div>
+      <div class="p-3 form-group">
+        <label for="dateCloture">Date de la clôture de l'épreuve</label>
+        <input
+          type="date"
+          class="form-control"
+          id="dateCloture"
+          v-model="examen.dateDebut"
+          name="dateCloture"
         />
       </div>
       <div class="p-3 form-group">
@@ -88,38 +110,58 @@
 
 <script>
 import ExamenDataService from "../services/examenDataService.js";
+import useVuelidate from "@vuelidate/core";
+import { required } from "@vuelidate/validators";
 
 export default {
   name: "creer-examen",
   data() {
     return {
+      v$: useVuelidate(),
       examen: {
         titre: "",
         universite: "",
         matiere: "",
         dateDebut: "",
+        dateCloture:"",
         heure: "",
       },
       file: undefined,
       erreurMessage: "",
-      submitted: false,
       erreur: false,
+      valide: false,
+    };
+  },
+  validations() {
+    return {
+      examen: {
+        titre: { required },
+        universite: { required },
+        dateDebut: { required },
+        heure: { required },
+      },
     };
   },
   methods: {
     createExam() {
+      this.v$.$validate();
+      if (this.v$.$error) {
+        this.erreur = true;
+        return;
+      }
       if (!this.file) {
         var data = {
           titre: this.examen.titre,
           universite: this.examen.universite,
           matiere: this.examen.matiere,
           dateDebut: this.examen.dateDebut,
+          dateCloture: this.examen.dateCloture,
           heure: this.examen.heure,
         };
         ExamenDataService.create(data)
           .then((response) => {
             console.log(response.data);
-            this.submitted = true;
+            this.valide = true;
             this.erreur = false;
           })
           .catch((e) => {
@@ -133,16 +175,15 @@ export default {
         formData.append("matiere", this.examen.matiere);
         formData.append("dateDebut", this.examen.dateDebut);
         formData.append("heure", this.examen.heure);
+        formData.append("dateCloture", this.examen.dateCloture);
         formData.append("file", this.file);
         ExamenDataService.createWithCsv(formData)
-        .then((response) => {
+          .then((response) => {
             console.log(response.data);
-            this.submitted = true;
-            this.erreur = false;
+            this.valide = true;
           })
           .catch((e) => {
             this.erreurMessage = e.response.data.message;
-            this.erreur = true;
           });
       }
     },
@@ -151,8 +192,7 @@ export default {
     },
 
     newExam() {
-      this.submitted = false;
-      this.examen = {};
+      window.location.reload();
     },
   },
 };

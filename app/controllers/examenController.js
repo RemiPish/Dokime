@@ -188,6 +188,7 @@ exports.create = (req, res) => {
       universite: req.body.universite,
       matiere: req.body.matiere,
       dateDebut: req.body.dateDebut,
+      dateCloture: req.body.dateCloture,
       heure: req.body.heure,
       mode: "Emargement",
       listeEtudiants: [],

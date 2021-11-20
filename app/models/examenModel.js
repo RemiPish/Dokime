@@ -24,7 +24,7 @@ const examenSchema = new Schema({
         type: String
     },
     dateCloture: {
-        type: Date,
+        type: String,
     },
     mode: {
         type: String,

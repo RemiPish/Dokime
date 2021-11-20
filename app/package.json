@@ -10,6 +10,8 @@
   "dependencies": {
     "@hennge/vue3-pagination": "^1.0.17",
     "@mdi/font": "5.9.55",
+    "@vuelidate/core": "^2.0.0-alpha.32",
+    "@vuelidate/validators": "^2.0.0-alpha.25",
     "axios": "^0.21.3",
     "core-js": "^3.6.5",
     "glob-parent": "^6.0.1",
