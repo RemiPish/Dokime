@@ -1,3 +1,9 @@
+<style scoped>
+.messageErreur {
+  color: red;
+}
+</style>
+
 <template>
   <div class="submit-form">
     <div class="header">
@@ -14,7 +20,10 @@
           v-model="examen.titre"
           name="titre"
         />
-        <span v-if="v$.examen.titre.$error" class="messageErreur">
+        <span
+          v-if="erreur && v$.examen.titre.required.$invalid"
+          class="messageErreur"
+        >
           Le titre ne doit pas être vide!
         </span>
       </div>
@@ -27,8 +36,11 @@
           v-model="examen.universite"
           name="universite"
         />
-        <span v-if="v$.examen.universite.$error" class="messageErreur">
-          L'universite ne doit pas être vide!
+        <span
+          v-if="erreur && v$.examen.universite.required.$invalid"
+          class="messageErreur"
+        >
+          L'université ne doit pas être vide!
         </span>
       </div>
 
@@ -51,8 +63,22 @@
           v-model="examen.dateDebut"
           name="dateDebut"
         />
-        <span v-if="v$.examen.dateDebut.$error" class="messageErreur">
+        <span
+          v-if="erreur && v$.examen.dateDebut.required.$invalid"
+          class="messageErreur"
+        >
           La date de debut de l'épreuve ne doit pas être vide!
+        </span>
+        <span
+          v-if="
+            erreur &&
+            !v$.examen.dateDebut.required.$invalid &&
+            v$.examen.dateDebut.minDate.$invalid
+          "
+          class="messageErreur"
+        >
+          La date de debut de l'épreuve ne doit pas être antérieure à la date
+          d'aujourd'hui!
         </span>
       </div>
       <div class="p-3 form-group">
@@ -64,7 +90,10 @@
           v-model="examen.heure"
           name="heure"
         />
-         <span v-if="v$.examen.heure.$error" class="messageErreur">
+        <span
+          v-if="erreur && v$.examen.heure.required.$invalid"
+          class="messageErreur"
+        >
           L'heure de l'épreuve ne doit pas être vide!
         </span>
       </div>
@@ -74,9 +103,21 @@
           type="date"
           class="form-control"
           id="dateCloture"
-          v-model="examen.dateDebut"
+          v-model="examen.dateCloture"
           name="dateCloture"
+          :disabled="v$.examen.dateDebut.required.$invalid"
         />
+        <span
+          v-if="
+            erreur &&
+            !v$.examen.dateDebut.required.$invalid &&
+            v$.examen.dateCloture.minCloture.$invalid
+          "
+          class="messageErreur"
+        >
+          La date de la clôture de l'épreuve ne doit pas être antérieure à la date
+          du debut de l'épreuve!
+        </span>
       </div>
       <div class="p-3 form-group">
         <label for="fichierCSV"
@@ -123,7 +164,7 @@ export default {
         universite: "",
         matiere: "",
         dateDebut: "",
-        dateCloture:"",
+        dateCloture: "",
         heure: "",
       },
       file: undefined,
@@ -132,23 +173,40 @@ export default {
       valide: false,
     };
   },
+  //mise en place des validations du formulaire avant la soumission
   validations() {
     return {
       examen: {
         titre: { required },
         universite: { required },
-        dateDebut: { required },
+        dateDebut: {
+          required,
+          minDate(val) {
+            var date = new Date(val);
+            date.setDate(date.getDate() + 1);
+
+            return date > new Date();
+          },
+        },
         heure: { required },
+        dateCloture: {
+          required,
+          minCloture(val) {
+            return new Date(val) > new Date(this.examen.dateDebut);
+          },
+        },
       },
     };
   },
   methods: {
     createExam() {
       this.v$.$validate();
+      //si la formulaire n'est pas valide : titre vide, universite vide etc.
       if (this.v$.$error) {
         this.erreur = true;
         return;
       }
+      // creer l'examen sans le fichier .csv
       if (!this.file) {
         var data = {
           titre: this.examen.titre,
@@ -159,8 +217,7 @@ export default {
           heure: this.examen.heure,
         };
         ExamenDataService.create(data)
-          .then((response) => {
-            console.log(response.data);
+          .then(() => {
             this.valide = true;
             this.erreur = false;
           })
@@ -168,7 +225,9 @@ export default {
             this.erreurMessage = e.response.data.message;
             this.erreur = true;
           });
-      } else {
+      }
+      // creer l'examen avec le fichier .csv
+      else {
         let formData = new FormData();
         formData.append("titre", this.examen.titre);
         formData.append("universite", this.examen.universite);
@@ -178,8 +237,7 @@ export default {
         formData.append("dateCloture", this.examen.dateCloture);
         formData.append("file", this.file);
         ExamenDataService.createWithCsv(formData)
-          .then((response) => {
-            console.log(response.data);
+          .then(() => {
             this.valide = true;
           })
           .catch((e) => {
@@ -187,10 +245,12 @@ export default {
           });
       }
     },
+    //mise a jour de fichier lors du chargement
     onChangeFileUpload() {
       this.file = this.$refs.file.files[0];
     },
 
+    //rafraichir la page pour un nouveau examen
     newExam() {
       window.location.reload();
     },

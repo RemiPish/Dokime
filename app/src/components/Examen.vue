@@ -1,3 +1,8 @@
+<style scoped>
+.messageErreur {
+  color: red;
+}
+</style>
 <template>
   <div v-if="examenSelectionne">
     <div class="row">
@@ -22,9 +27,13 @@
           <label><strong>Date du debut de l'epreuve:</strong></label>
           {{ examenSelectionne.dateDebut }}
         </div>
-        <div >
+        <div v-if="examenSelectionne.dateCloture != ''">
+          <label><strong>Date de la clôture de l'epreuve:</strong></label>
+          {{ examenSelectionne.dateCloture }}
+        </div>
+        <div>
           <label><strong>Code Correcteur:</strong></label>
-          {{ examenSelectionne.codeCorrecteur}}
+          {{ examenSelectionne.codeCorrecteur }}
         </div>
         <div>
           <label><strong>Mode:</strong></label>
@@ -61,10 +70,12 @@
             type="text"
             class="form-control"
             id="titre"
-            required
             v-model="examenSelectionne.titre"
             name="titre"
           />
+          <span v-if="v$.examenSelectionne.titre.$error" class="messageErreur">
+            Le titre ne doit pas être vide!
+          </span>
         </div>
         <div class="p-1 form-group">
           <label for="universite"><strong>Université:</strong></label>
@@ -72,10 +83,15 @@
             type="text"
             class="form-control"
             id="universite"
-            required
             v-model="examenSelectionne.universite"
             name="universite"
           />
+          <span
+            v-if="v$.examenSelectionne.universite.$error"
+            class="messageErreur"
+          >
+            L'universite ne doit pas être vide!
+          </span>
         </div>
         <div class="p-1 form-group">
           <label for="matiere"><strong>Matière:</strong></label>
@@ -83,7 +99,6 @@
             type="text"
             class="form-control"
             id="matiere"
-            required
             v-model="examenSelectionne.matiere"
             name="matiere"
           />
@@ -97,18 +112,50 @@
             v-model="examenSelectionne.dateDebut"
             name="dateDebut"
           />
+          <span
+            v-if="v$.examenSelectionne.dateDebut.$error"
+            class="messageErreur"
+          >
+            La date du debut de l'épreuve ne doit pas être vide!
+          </span>
         </div>
 
         <div class="p-1 form-group">
           <label><strong>Heure de l'epreuve:</strong></label>
           <input
+            type="time"
             class="form-control"
             id="heure"
             v-model="examenSelectionne.heure"
             name="heure"
           />
+          <span v-if="v$.examenSelectionne.heure.$error" class="messageErreur">
+            L'heure de l'épreuve ne doit pas être vide!
+          </span>
         </div>
-          <div class="p-1 form-group">
+
+        <div class="p-1 form-group">
+          <label for="dateCloture">Date de la clôture de l'epreuve:</label>
+          <input
+            type="date"
+            class="form-control"
+            id="dateCloture"
+            v-model="examenSelectionne.dateCloture"
+            name="dateCloture"
+          />
+          <span
+            v-if="
+              !v$.examenSelectionne.dateDebut.required.$invalid &&
+              v$.examenSelectionne.dateCloture.minCloture.$invalid
+            "
+            class="messageErreur"
+          >
+            La date de la clôture de l'épreuve ne doit pas être antérieure à la
+            date du debut de l'épreuve!
+          </span>
+        </div>
+
+        <div class="p-1 form-group">
           <label for="nom"><strong>Présence:</strong></label>
           <select
             class="form-control"
@@ -122,14 +169,14 @@
             <option value="Clos">Clos</option>
           </select>
         </div>
-        
+
         <div class="p-3">
           <button @click="updateExam" class="btn btn-success">Modifier</button>
         </div>
       </div>
 
       <div class="col submit-form p-2" v-if="pdfEmargement">
-        <h2>Choisissez le document à télécharger </h2>
+        <h2>Choisissez le document à télécharger</h2>
         <div class="p-3">
           <button @click="feuilleEmargement" class="btn btn-success">
             Feuille d'émargement
@@ -222,6 +269,9 @@
             min="0"
             max="20"
           />
+          <span v-if="v$.etudiantSelectionne.note.$error" class="messageErreur">
+            La note doit être comprise entre 0 et 20
+          </span>
         </div>
         <div class="p-3">
           <button @click="updateStudent" class="btn btn-success">
@@ -302,11 +352,14 @@
 
 <script>
 import ExamenDataService from "../services/examenDataService.js";
+import useVuelidate from "@vuelidate/core";
+import { required,minValue,maxValue } from "@vuelidate/validators";
 
 export default {
   name: "examen-detail",
   data() {
     return {
+      v$: useVuelidate(),
       etudiant: {
         nom: "",
         prenom: "",
@@ -322,6 +375,30 @@ export default {
       pdfEmargement: false,
     };
   },
+  validations() {
+    return {
+      examenSelectionne: {
+        titre: { required },
+        universite: { required },
+        heure: { required },
+        dateDebut: {
+          required,
+        },
+        dateCloture: {
+          required,
+          minCloture(val) {
+            return new Date(val) > new Date(this.examenSelectionne.dateDebut);
+          },
+        },
+      },
+      etudiantSelectionne: {
+        note:{
+          minValue: minValue(0),
+          maxValue: maxValue(20)
+        }
+      },
+    };
+  },
   methods: {
     getExamen(id) {
       ExamenDataService.get(id)
@@ -335,8 +412,7 @@ export default {
 
     closeExam() {
       ExamenDataService.closeExam(this.examenSelectionne._id)
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.message = "L'examen est clos";
           this.refreshPage();
         })
@@ -346,12 +422,17 @@ export default {
     },
 
     updateExam() {
+      this.v$.$validate();
+      //si la formulaire n'est pas valide : titre vide, universite vide etc.
+      if (this.v$.$error) {
+        return;
+      }
+
       ExamenDataService.updateExam(
         this.examenSelectionne._id,
         this.examenSelectionne
       )
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.message = "L'examen a été modifié";
           this.modifExam = false;
         })
@@ -361,12 +442,17 @@ export default {
     },
 
     updateStudent() {
+      this.v$.$validate();
+      //si la note n'est pas valide, l'étudiant n'est pas modifié
+      if (this.v$.$error) {
+        return;
+      }
+      
       ExamenDataService.updateStudent(
         this.examenSelectionne._id,
         this.etudiantSelectionne
       )
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.message = "L'etudiant a été modifié";
           this.refreshPage();
         })
@@ -378,7 +464,6 @@ export default {
     getStudent(num) {
       ExamenDataService.findAStudent(this.examenSelectionne._id, num)
         .then((response) => {
-          console.log(response.data);
           this.changeBoolean("modifEtudiant");
           this.etudiantSelectionne = response.data;
         })
@@ -394,8 +479,7 @@ export default {
         numero: this.etudiant.numero,
       };
       ExamenDataService.addAStudent(this.examenSelectionne._id, data)
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.message = "L'étudiant a été ajouté de la liste de candidats!";
           this.refreshPage();
         })
@@ -409,8 +493,7 @@ export default {
         numero: numero,
       };
       ExamenDataService.deleteAStudent(this.examenSelectionne._id, data)
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.message = "L'étudiant a été supprimé de la liste de candidats!";
           this.changeBoolean("all");
           this.refreshPage();
@@ -426,13 +509,12 @@ export default {
     },
     deleteExam() {
       ExamenDataService.delete(this.examenSelectionne._id)
-        .then((response) => {
-          console.log(response.data);
+        .then(() => {
           this.examenSelectionne = null;
           this.refreshList();
         })
         .catch((e) => {
-          console.log(e);
+           this.message = e;
         });
       (location.href = "/examens"), true;
     },
@@ -477,7 +559,7 @@ export default {
           this.ajoutEtudiant = false;
           this.modifEtudiant = false;
           this.pdfEmargement = false;
-           break;
+          break;
         default:
           this.modifExam = false;
           this.ajoutEtudiant = false;
