@@ -8,6 +8,7 @@ const fs = require('fs')
 const https = require('https');
 const key = fs.readFileSync('cert/CA/localhost/localhost.decrypted.key');
 const cert = fs.readFileSync('cert/CA/localhost/localhost.crt');
+const dbConfig = require ('./app/config/dbConfig');
 
 
 var corsOptions = {
@@ -22,9 +23,8 @@ app.use(express.urlencoded({ extended: true }))
 app.use(cors(corsOptions));
 
 
-const uri = 'mongodb+srv://RemiP:QR7xCS8P5pXP2rD@cluster0.bxa2e.mongodb.net/ExamenDB?retryWrites=true&w=majority';
 mongoose
-  .connect(uri, {
+  .connect(dbConfig.URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })

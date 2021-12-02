@@ -150,6 +150,7 @@
 </template>
 
 <script>
+// Ce composant contient un formulaire a remplir pour créer un examen dans la base de donnée. La liste de candidats peut être inclus avec un fichier CSV
 import ExamenDataService from "../services/examenDataService.js";
 import useVuelidate from "@vuelidate/core";
 import { required } from "@vuelidate/validators";
