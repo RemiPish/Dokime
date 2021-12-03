@@ -7,7 +7,7 @@
 <template>
   <div class="submit-form col-md-8">
     <div class="header">
-      <h1>IDENTIFIEZ-VOUS</h1>
+      <h1>S'INSCRIRE</h1>
     </div>
 
     <div v-if="!valide">
@@ -19,11 +19,29 @@
 
           <div class="col-md-6">
             <input
+              v-model="utilisateur.identifiant"
               id="identifiant"
               type="text"
               class="form-control"
               name="identifiant"
-              value=""
+              required
+              autofocus
+            />
+          </div>
+        </div>
+
+         <div class="p-3 form-group row">
+          <label for="email" class="col-md-4 col-form-label text-md-right"
+            >Addresse mail</label
+          >
+
+          <div class="col-md-6">
+            <input
+              v-model="utilisateur.email"
+              id="email"
+              type="email"
+              class="form-control"
+              name="email"
               required
               autofocus
             />
@@ -37,6 +55,7 @@
 
           <div class="col-md-6">
             <input
+              v-model="utilisateur.motDePasse"
               id="motDePasse"
               type="password"
               class="form-control"
@@ -82,27 +101,22 @@
 </template>
 
 <script>
-import useVuelidate from "@vuelidate/core";
-//import { required } from "@vuelidate/validators";
+import Utilisateur from '../../models/utilisateur.js';
 
 export default {
-  name: "creer-examen",
+  name: "inscription",
   data() {
     return {
-      v$: useVuelidate(),
+      utilisateur: new Utilisateur('','',''),
       erreurMessage: "",
       erreur: false,
       valide: false,
     };
   },
-  //mise en place des validations du formulaire avant la soumission
+
   validations() {
-    return {
-
-    };
+    return {};
   },
-  methods: {
-
-  },
+  methods: {},
 };
 </script>

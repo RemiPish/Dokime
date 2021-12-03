@@ -154,20 +154,14 @@
 import ExamenDataService from "../services/examenDataService.js";
 import useVuelidate from "@vuelidate/core";
 import { required } from "@vuelidate/validators";
+import Examen from '../../models/examen.js';
 
 export default {
   name: "creer-examen",
   data() {
     return {
       v$: useVuelidate(),
-      examen: {
-        titre: "",
-        universite: "",
-        matiere: "",
-        dateDebut: "",
-        dateCloture: "",
-        heure: "",
-      },
+      examen: new Examen('','','','','',''),
       file: undefined,
       erreurMessage: "",
       erreur: false,

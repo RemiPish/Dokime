@@ -19,10 +19,10 @@
       </div>
       <div class="navbar-nav ms-auto">
         <li class="nav-item ">
-          <router-link to="/examens" class="nav-link">Se Connecter</router-link>
+          <router-link to="/connexion" class="nav-link">Se Connecter</router-link>
         </li>
         <li class="nav-item ">
-          <router-link to="/examens" class="nav-link">S'inscrire'</router-link>
+          <router-link to="/inscription" class="nav-link">S'inscrire</router-link>
         </li>
       </div>
     </nav>
